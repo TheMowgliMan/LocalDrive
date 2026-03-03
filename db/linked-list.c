@@ -131,7 +131,7 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 	current_end = tfwd_as(ll, fn);
 
 	lla->next_node = current_end->next_node;
-	lls->prev_node = current_end;
+	lla->prev_node = current_end;
 	current_end->next_node = lla;
   }
 }
