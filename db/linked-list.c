@@ -8,8 +8,9 @@
 #define true 1
 #define false 0
 
-#define LL_FILENAME_TOO_LONG_ERROR -1
-#define LL_NOT_HEAD_NODE -2
+#define LL_FILENAME_TOO_LONG_ERROR 1
+#define LL_NOT_HEAD_NODE 2
+#define LL_BAD_INDEX 3
 
 // A struct for a single node in the linked list.
 struct llNode;
@@ -35,9 +36,27 @@ struct llNode {
   struct llNode* next_smallest;
 };
 
+void hcf(char* msg) {
+  openlog("LocalDrive Database Index", LOG_PERROR | LOG_PID, LOG_MAKEPRI(LOG_FTP, LOG_CRIT));
+  syslog(LOG_MAKEPRI(LOG_FTP, LOG_CRIT), "%s", msg);
+  closelog();
+
+  exit(2); // TODO: Use atexit to backup the database at crash!
+}
+
+// A safe malloc call
+void* xmalloc(size_t size) {
+  void *pointer = malloc(size);
+  if (pointer == 0 || pointer == NULL) {
+	hcf("Failed to allocate virtual memory during xmalloc call in database!");
+  }
+
+  return pointer;
+}
+
 // create a linked list
 struct llNode* new_ll() {
-  struct llNode* ll = (struct llNode*)malloc(sizeof(struct llNode));
+  struct llNode* ll = (struct llNode*)xmalloc(sizeof(struct llNode));
   
   ll->is_head = true;
   ll->timestamp = time(NULL);
@@ -85,33 +104,45 @@ struct llNode* tfwd_as(struct llNode* ll, char* str) {
   return now;
 }
 
+/* Traverse Forwards by Size, Sorted:
+   gets the biggest item smaller than size */
 struct llNode* tfwd_ss(struct llNode* ll, uint64_t size) {
   struct llNode* now = ll;
-  struct llNode* next = now->next_alpha;
+  struct llNode* next = now->next_largest;
 
   while (next->is_head == false && next->size < size) {
 	now = next;
-	next = now->next_alpha;
+	next = now->next_largest;
   }
 
   return now;
 }
 
-void hcf(char* msg) {
-  openlog("LocalDrive Database Index", LOG_PERROR | LOG_PID, LOG_MAKEPRI(LOG_FTP, LOG_CRIT));
-  syslog(LOG_MAKEPRI(LOG_FTP, LOG_CRIT), "%s", msg);
-  closelog();
+/* Get via Nodes:
+   gets item *x* after head */
+struct llNode* get_n(struct llNode* ll, uint64_t item) {
+  struct llNode* now = ll;
+  struct llNode* next = now->next_node;
 
-  exit(2); // TODO: Use atexit to backup the database at crash!
-}
-
-void* xmalloc(size_t size) {
-  void *pointer = malloc(size);
-  if (pointer == 0 || pointer == NULL) {
-	hcf("Failed to allocate virtual memory during xmalloc call in database!");
+  if (next == NULL) {
+	fprintf(stderr, "invalid list index for get_n(); there are no items in this list!");
+	return ll;
   }
 
-  return pointer;
+  uint64_t i = 0;
+  while (i < item) {
+	now = next;
+	next = now->next_node;
+
+	i++;
+
+	if (next == NULL) {
+	  fprintf(stderr, "invalid list index for get_n(); got %d, but length is %d", item, i);
+	  return ll;
+	}
+  }
+
+  return next;
 }
 
 // appends an item to the ll (must be the head node!)
