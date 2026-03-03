@@ -206,13 +206,18 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 
 // tests
 int main() {
-  struct llNode t;
-  struct llNode *test_node = &t;
-  
-  char test_string[] = "hello_world.txt";
-  memcpy(test_node->fname, test_string, sizeof(char) * strlen(test_string));
-  
-  printf("file name: %s \n", test_node->fname);
+  printf("Creating linked list...\n");
+  struct llNode *t = new_ll();
 
+  printf("Adding items...\n");
+  append(t, "one", 1, 0);
+  append(t, "two", 1, 0);
+  append(t, "three", 1, 0);
+  append(t, "four", 1, 0);
+
+  printf("Item 1: %s \n", get_n(t, 1)->fname);
+  printf("Item 3: %s \n", get_n(t, 3)->fname);
+
+  printf("Sizeof(t): %d", sizeof(t));
   return 0;
 }
