@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <syslog.h>
 
 #define true 1
 #define false 0
@@ -41,6 +42,7 @@ struct llNode* new_ll() {
   ll->is_head = true;
   ll->timestamp = time(NULL);
   ll->frevision = 0;
+  ll->size = 0;
 
   char tmp[] = "LIST HEAD (NOT A FILE!)";
   memcpy(ll->fname, tmp, sizeof(char) * strlen(tmp));
@@ -83,13 +85,42 @@ struct llNode* tfwd_as(struct llNode* ll, char* str) {
   return now;
 }
 
+struct llNode* tfwd_ss(struct llNode* ll, uint64_t size) {
+  struct llNode* now = ll;
+  struct llNode* next = now->next_alpha;
+
+  while (next->is_head == false && next->size < size) {
+	now = next;
+	next = now->next_alpha;
+  }
+
+  return now;
+}
+
+void hcf(char* msg) {
+  openlog("LocalDrive Database Index", LOG_PERROR | LOG_PID, LOG_MAKEPRI(LOG_FTP, LOG_CRIT));
+  syslog(LOG_MAKEPRI(LOG_FTP, LOG_CRIT), "%s", msg);
+  closelog();
+
+  exit(2); // TODO: Use atexit to backup the database at crash!
+}
+
+void* xmalloc(size_t size) {
+  void *pointer = malloc(size);
+  if (pointer == 0 || pointer == NULL) {
+	hcf("Failed to allocate virtual memory during xmalloc call in database!");
+  }
+
+  return pointer;
+}
+
 // appends an item to the ll (must be the head node!)
 int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
   if (ll->is_head == false) {
 	fprintf(stderr, "must pass head node of linked list to append()!");
 	return LL_NOT_HEAD_NODE;
   }
-  struct llNode* lla = (struct llNode*)malloc(sizeof(struct llNode));
+  struct llNode* lla = (struct llNode*)xmalloc(sizeof(struct llNode));
 
   lla->is_head = false;
   lla->timestamp = time(NULL);
@@ -130,9 +161,15 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 
 	current_end = tfwd_as(ll, fn);
 
-	lla->next_node = current_end->next_node;
-	lla->prev_node = current_end;
-	current_end->next_node = lla;
+	lla->next_alpha = current_end->next_alpha;
+	lla->prev_alpha = current_end;
+	current_end->next_alpha = lla;
+
+	current_end = tfwd_ss(ll, fsize);
+
+	lla->next_largest = current_end->next_largest;
+	lla->next_smallest = current_end;
+	current_end->next_largest = lla;
   }
 }
 
