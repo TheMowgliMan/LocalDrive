@@ -5,6 +5,8 @@
 #include <time.h>
 
 // A struct for a single node in the linked list.
+struct llNode;
+
 struct llNode {
   char fname[256];
   uint64_t size; // in bytes
@@ -25,11 +27,13 @@ struct llNode {
 
 // tests
 int main() {
-  struct llNode* test_node;
-  char test_string[] = "hello_world.txt";
-  memcpy(test_node->fname, test_string, sizeof(test_string));
+  struct llNode t;
+  struct llNode *test_node = &t;
   
-  printf(" %s", test_node->fname);
+  char test_string[] = "hello_world.txt";
+  memmove(test_node->fname, test_string, sizeof(char) * strlen(test_string));
+  
+  printf("file name: %s \n", test_node->fname);
 
   return 0;
 }
