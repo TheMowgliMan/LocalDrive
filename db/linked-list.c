@@ -202,6 +202,8 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 	lla->next_smallest = current_end;
 	current_end->next_largest = lla;
   }
+
+  return 0;
 }
 
 // tests
@@ -218,6 +220,6 @@ int main() {
   printf("Item 1: %s \n", get_n(t, 1)->fname);
   printf("Item 3: %s \n", get_n(t, 3)->fname);
 
-  printf("Sizeof(t): %d", sizeof(t));
+  printf("Sizeof(t): %d \n", sizeof(struct llNode));
   return 0;
 }
