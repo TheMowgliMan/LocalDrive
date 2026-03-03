@@ -70,6 +70,19 @@ struct llNode* tfwd_n(struct llNode* ll) {
   return now;
 }
 
+// Traverse Forwards Alphabetically, Sorted: gets the highest fname item that is less than the input string
+struct llNode* tfwd_as(struct llNode* ll, char* str) {
+  struct llNode* now = ll;
+  struct llNode* next = now->next_alpha;
+
+  while (next->is_head == false && strcmp(next->fname, str) < 0) {
+	now = next;
+	next = now->next_alpha;
+  }
+
+  return now;
+}
+
 // appends an item to the ll (must be the head node!)
 int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
   if (ll->is_head == false) {
@@ -94,9 +107,17 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 	// this means that the head passed is the head of an empty alist
 	ll->next_node = lla;
 	ll->prev_node = lla;
+	ll->next_alpha = lla;
+	ll->prev_alpha = lla;
+	ll->next_largest = lla;
+	ll->next_smallest = lla;
 
 	lla->next_node = ll;
 	lla->prev_node = ll;
+	lla->next_alpha = ll;
+	lla->prev_alpha = ll;
+	lla->next_largest = ll;
+	lla->next_smallest = ll;
   } else {
 	// there are more items to the list
 	struct llNode *current_end = tfwd_n(ll);
@@ -106,6 +127,12 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 
 	ll->prev_node = lla; // remember that ll is always the head (i.e., first node) of the linked list
 	lla->next_node = ll;
+
+	current_end = tfwd_as(ll, fn);
+
+	lla->next_node = current_end->next_node;
+	lls->prev_node = current_end;
+	current_end->next_node = lla;
   }
 }
 
