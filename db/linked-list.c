@@ -85,6 +85,34 @@ struct llNode* new_ll() {
   return ll;
 }
 
+/* Get via Nodes:
+   gets item *x* after head */
+struct llNode* get_n(struct llNode* ll, uint64_t item) {
+  struct llNode* now = ll;
+  struct llNode* next = now->next_node;
+
+  if (next == NULL) {
+	fprintf(stderr, "invalid list index for get_n(); there are no items in this list!");
+	return ll;
+  }
+
+  uint64_t i = 0;
+  while (i < item) {
+	now = next;
+	next = now->next_node;
+
+	i++;
+
+	if (next == NULL) {
+	  fprintf(stderr, "invalid list index for get_n(); got %ld, but length is %ld", item, i);
+	  return ll;
+	}
+  }
+
+  return next;
+}
+
+
 // Traverse Forward via Nodes: gets the last item of the list as added to it
 struct llNode* tfwd_n(struct llNode* ll) {
   struct llNode* now = ll;
@@ -93,6 +121,44 @@ struct llNode* tfwd_n(struct llNode* ll) {
   while (next->is_head == false) {
 	now = next;
 	next = now->next_node;
+  }
+
+  return now;
+}
+
+/* Traverse One via Nodes, Relative:
+   go forward or back a node along the list items */
+struct llNode* tone_rn(struct llNode* ll, int8_t dir) {
+  if (!(abs(dir) == 1)) {
+	// dir has to equal one or negative one
+	fprintf(stderr, "'dir' for tone_rn() (aka 'Traverse One via Nodes, Relative) must be 1 or -1:\nActually got %d", dir);
+	return ll;
+  }
+
+  if (dir == 1) {
+	return ll->next_node;
+  }
+
+  return ll->prev_node;
+}
+
+/* These next two functions are aliases for tone_rn(ll, 1) and tone_rn(ll, -1) respectively */
+struct llNode* next_node(struct llNode* ll) {
+  return tone_rn(ll, 1);
+}
+
+struct llNode* prev_node(struct llNode* ll) {
+  return tone_rn(ll, -1);
+}
+
+/* Traverse an Amount via Nodes, Relative:
+   moves forward or back an amount along the list items */
+struct llNode* tamt_rn(struct llNode* ll, int64_t start, int32_t offset) {
+  int8_t direction = offset / abs(offset); // This should be 1 or -1 for `tone_rn()` above
+  struct llNode *now = get_n(ll, start);
+  
+  for (int32_t i = 0; i != offset; i += direction) {
+	now = tone_rn(now, direction);
   }
 
   return now;
@@ -139,33 +205,6 @@ struct llNode* tfwd_ts(struct llNode* ll, int64_t size) {
   return now;
 }
 
-/* Get via Nodes:
-   gets item *x* after head */
-struct llNode* get_n(struct llNode* ll, uint64_t item) {
-  struct llNode* now = ll;
-  struct llNode* next = now->next_node;
-
-  if (next == NULL) {
-	fprintf(stderr, "invalid list index for get_n(); there are no items in this list!");
-	return ll;
-  }
-
-  uint64_t i = 0;
-  while (i < item) {
-	now = next;
-	next = now->next_node;
-
-	i++;
-
-	if (next == NULL) {
-	  fprintf(stderr, "invalid list index for get_n(); got %d, but length is %d", item, i);
-	  return ll;
-	}
-  }
-
-  return next;
-}
-
 // appends an item to the ll (must be the head node!)
 int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
   if (ll->is_head == false) {
@@ -181,7 +220,7 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
   lla->size = fsize;
 
   if (strlen(fn) > 255) {
-	fprintf(stderr, "filename max length is 255, got %d", strlen(fn));
+	fprintf(stderr, "filename max length is 255, got %ld", strlen(fn));
 	return LL_FILENAME_TOO_LONG_ERROR;
   }
 
@@ -250,6 +289,6 @@ int main() {
   printf("Item 1: %s \n", get_n(t, 1)->fname);
   printf("Item 3: %s \n", get_n(t, 3)->fname);
 
-  printf("Sizeof(t): %d \n", sizeof(struct llNode));
+  printf("Sizeof(t): %ld \n", sizeof(struct llNode));
   return 0;
 }
