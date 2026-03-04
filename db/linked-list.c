@@ -37,7 +37,7 @@ struct llNode {
 
   // pointers for next and last node by last access
   struct llNode* next_oldest;
-  struct llNOde* next_youngest;
+  struct llNode* next_youngest;
 };
 
 void hcf(char* msg) {
@@ -127,13 +127,13 @@ struct llNode* tfwd_ss(struct llNode* ll, uint64_t size) {
 
 /* Traverse Forwards by Timestamp, Sorted:
    gets the oldest item newer than size */
-struct llNode* tfwd_ss(struct llNode* ll, uint64_t size) {
+struct llNode* tfwd_ts(struct llNode* ll, int64_t size) {
   struct llNode* now = ll;
-  struct llNode* next = now->next_largest;
+  struct llNode* next = now->next_oldest;
 
-  while (next->is_head == false && next->size < size) {
+  while (next->is_head == false && next->timestamp > size) {
 	now = next;
-	next = now->next_largest;
+	next = now->next_oldest;
   }
 
   return now;
@@ -175,6 +175,7 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
   struct llNode* lla = (struct llNode*)xmalloc(sizeof(struct llNode));
 
   lla->is_head = false;
+  time_t current_time = time(NULL);
   lla->timestamp = time(NULL);
   lla->frevision = revision;
   lla->size = fsize;
@@ -194,6 +195,8 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 	ll->prev_alpha = lla;
 	ll->next_largest = lla;
 	ll->next_smallest = lla;
+	ll->next_oldest = lla;
+	ll->next_youngest = lla;
 
 	lla->next_node = ll;
 	lla->prev_node = ll;
@@ -221,6 +224,12 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 
 	lla->next_largest = current_end->next_largest;
 	lla->next_smallest = current_end;
+	current_end->next_largest = lla;
+
+	current_end = tfwd_ts(ll, current_time);
+
+	lla->next_oldest = current_end->next_oldest;
+	lla->next_youngest = current_end;
 	current_end->next_largest = lla;
   }
 
