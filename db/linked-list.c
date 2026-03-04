@@ -34,6 +34,10 @@ struct llNode {
   // pointers for the next and last node by filesize
   struct llNode* next_largest;
   struct llNode* next_smallest;
+
+  // pointers for next and last node by last access
+  struct llNode* next_oldest;
+  struct llNOde* next_youngest;
 };
 
 void hcf(char* msg) {
@@ -75,6 +79,9 @@ struct llNode* new_ll() {
   ll->next_largest = NULL;
   ll->next_smallest = NULL;
 
+  ll->next_oldest = NULL;
+  ll->next_youngest = NULL;
+
   return ll;
 }
 
@@ -106,6 +113,20 @@ struct llNode* tfwd_as(struct llNode* ll, char* str) {
 
 /* Traverse Forwards by Size, Sorted:
    gets the biggest item smaller than size */
+struct llNode* tfwd_ss(struct llNode* ll, uint64_t size) {
+  struct llNode* now = ll;
+  struct llNode* next = now->next_largest;
+
+  while (next->is_head == false && next->size < size) {
+	now = next;
+	next = now->next_largest;
+  }
+
+  return now;
+}
+
+/* Traverse Forwards by Timestamp, Sorted:
+   gets the oldest item newer than size */
 struct llNode* tfwd_ss(struct llNode* ll, uint64_t size) {
   struct llNode* now = ll;
   struct llNode* next = now->next_largest;
