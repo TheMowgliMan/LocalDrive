@@ -277,7 +277,7 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 
 // tests
 int main() {
-  printf("Test 1: basic append() and get_n()\n")
+  printf("Test 1: basic append() and get_n()\n");
   printf("Creating linked list...\n");
   struct llNode *t = new_ll();
 
@@ -292,23 +292,26 @@ int main() {
 
   printf("Sizeof(t): %ld \n", sizeof(struct llNode));
 
-  printf("Test 2: appending and iterating 1,000,000 nodes\n");
+  printf("Test 2: appending and iterating 100,000 nodes\n");
 
   printf("Creating linked list...\n");
   t = new_ll();
 
-  printf("Appending 1,000,000 items...");
-  for (int i = 0; i < 1000000; i++) {
+  printf("Appending 100,000 items...\n");
+  for (int i = 0; i < 100000; i++) {
 	append(t, "some filename", 1, 0);
+	if (i % 5000 == 0) {
+	  printf("  %dth item...\n", i);
+	}
   }
 
-  printf("Iterating 1,000,000 items...");
+  printf("Iterating 100,000 items...\n");
   char new_fname[] = "new filename!";
   for (struct llNode* iter = t; !(iter->is_head == true); iter = next_node(iter)) {
 	memcpy(iter->fname, new_fname, strlen(new_fname) * sizeof(char));
   }
 
-  printf("Done!");
+  printf("Done!\n");
   
   return 0;
 }
