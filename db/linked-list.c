@@ -269,7 +269,7 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 
 	lla->next_oldest = current_end->next_oldest;
 	lla->next_youngest = current_end;
-	current_end->next_largest = lla;
+	current_end->next_oldest = lla;
   }
 
   return 0;
@@ -278,6 +278,11 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 /* Delete by Pointer:
    deletes the node corresponding to a struct `llNode*` pointer. */
 int del_p(struct llNode* ptr) {
+  if (ptr->next_node == ptr) {
+	// The pointer is the last one
+	ptr->next_node = NULL; // This will cause the node to become deletable
+  }
+  
   if (ptr->next_node != NULL) {
 	if (ptr->is_head == true) {
 	  fprintf(stderr, "cannot free the head node of a non-empty list!");
@@ -288,13 +293,42 @@ int del_p(struct llNode* ptr) {
 	  ptr->next_node->prev_node = ptr->prev_node;
 
 	  ptr->prev_alpha->next_alpha = ptr->next_alpha;
-	  ptr->next_alpha->prev_alpha = ptr->alpha_node;
+	  ptr->next_alpha->prev_alpha = ptr->prev_alpha;
+
+	  ptr->next_smallest->next_largest = ptr->next_largest;
+	  ptr->next_largest->next_smallest = ptr->next_smallest;
+
+	  ptr->next_youngest->next_oldest = ptr->next_oldest;
+	  ptr->next_oldest->next_youngest = ptr->next_youngest;
+
+	  free(ptr);
+
 	}
   } else {
 	free(ptr);
   }
 
   return 0;
+}
+
+/* Delete by Node:
+   deletes the node corresponding to an index. Not recommended if you already have the pointer; use del_p() then */
+int del(struct llNode* ll, uint64_t idx) {
+  struct llNode* deleting = get_n(ll, idx);
+  if (deleting == ll) {
+	return LL_BAD_INDEX;
+  }
+
+  return del_p(deleting);
+}
+
+// Does what it says
+int delete_the_whole_entire_list(struct llNode* ll) {
+  while (ll->next_node != NULL) {
+	del_p(ll->next_node);
+  }
+
+  return del_p(ll);
 }
 
 // tests
