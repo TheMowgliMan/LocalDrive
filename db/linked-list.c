@@ -324,7 +324,7 @@ int del(struct llNode* ll, uint64_t idx) {
 
 // Does what it says
 int delete_the_whole_entire_list(struct llNode* ll) {
-  while (ll->next_node != NULL) {
+  while (ll->next_node != ll) {
 	del_p(ll->next_node);
   }
 
@@ -363,11 +363,11 @@ int main() {
 
   printf("Iterating 100,000 items...\n");
   char new_fname[] = "new filename!";
-  for (struct llNode* iter = t; !(iter->is_head == true); iter = next_node(iter)) {
+  for (struct llNode* iter = t; !(iter->next_node->is_head == true); iter = next_node(iter)) {
 	memcpy(iter->fname, new_fname, strlen(new_fname) * sizeof(char));
   }
 
-  printf("Deleting the list...");
+  printf("Deleting the list...\n");
   delete_the_whole_entire_list(t);
 
   printf("Done!\n");
