@@ -214,7 +214,6 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
   struct llNode* lla = (struct llNode*)xmalloc(sizeof(struct llNode));
 
   lla->is_head = false;
-  time_t current_time = time(NULL);
   lla->timestamp = time(NULL);
   lla->frevision = revision;
   lla->size = fsize;
