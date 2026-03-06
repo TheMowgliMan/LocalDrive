@@ -11,6 +11,7 @@
 #define LL_FILENAME_TOO_LONG_ERROR 1
 #define LL_NOT_HEAD_NODE 2
 #define LL_BAD_INDEX 3
+#define LL_WRONG_NODE 4
 
 // A struct for a single node in the linked list.
 struct llNode;
@@ -269,6 +270,28 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 	lla->next_oldest = current_end->next_oldest;
 	lla->next_youngest = current_end;
 	current_end->next_largest = lla;
+  }
+
+  return 0;
+}
+
+/* Delete by Pointer:
+   deletes the node corresponding to a struct `llNode*` pointer. */
+int del_p(struct llNode* ptr) {
+  if (ptr->next_node != NULL) {
+	if (ptr->is_head == true) {
+	  fprintf(stderr, "cannot free the head node of a non-empty list!");
+	  return LL_WRONG_NODE;
+	} else {
+	  // We have to unlink the node before we can free it
+	  ptr->prev_node->next_node = ptr->next_node;
+	  ptr->next_node->prev_node = ptr->prev_node;
+
+	  ptr->prev_alpha->next_alpha = ptr->next_alpha;
+	  ptr->next_alpha->prev_alpha = ptr->alpha_node;
+	}
+  } else {
+	free(ptr);
   }
 
   return 0;

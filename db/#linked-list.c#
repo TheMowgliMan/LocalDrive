@@ -282,10 +282,22 @@ int del_p(struct llNode* ptr) {
 	if (ptr->is_head == true) {
 	  fprintf(stderr, "cannot free the head node of a non-empty list!");
 	  return LL_WRONG_NODE;
+	} else {
+	  // We have to unlink the node before we can free it
+	  ptr->prev_node->next_node = ptr->next_node;
+	  ptr->next_node->prev_node = ptr->prev_node;
+
+	  ptr->prev_alpha->next_alpha = ptr->next_alpha;
+	  ptr->next_alpha->prev_alpha = ptr->prev_alpha;
+
+	  ptr->next_smallest->next_largest = ptr->next_largest;
+	  ptr->next_node->prev_node = ptr->prev_node;
 	}
   } else {
-	
+	free(ptr);
   }
+
+  return 0;
 }
 
 // tests
