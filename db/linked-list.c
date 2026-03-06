@@ -367,6 +367,9 @@ int main() {
 	memcpy(iter->fname, new_fname, strlen(new_fname) * sizeof(char));
   }
 
+  printf("Deleting the list...");
+  delete_the_whole_entire_list(t);
+
   printf("Done!\n");
   
   return 0;
