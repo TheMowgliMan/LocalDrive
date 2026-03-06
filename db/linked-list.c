@@ -285,7 +285,7 @@ int del_p(struct llNode* ptr) {
   
   if (ptr->next_node != NULL) {
 	if (ptr->is_head == true) {
-	  fprintf(stderr, "cannot free the head node of a non-empty list!");
+	  fprintf(stderr, "cannot free the head node of a non-empty list! \n");
 	  return LL_WRONG_NODE;
 	} else {
 	  // We have to unlink the node before we can free it
@@ -324,10 +324,14 @@ int del(struct llNode* ll, uint64_t idx) {
 
 // Does what it says
 int delete_the_whole_entire_list(struct llNode* ll) {
-  while (ll->next_node != ll->prev_node) {
+  while (!(ll->next_node = ll->prev_node)) {
 	del_p(ll->next_node);
   }
 
+  del_p(ll->next_node);
+  ll->next_node = NULL; // Allows the head node to be free'd
+  del_p(ll);
+  
   return 0;
 }
 
