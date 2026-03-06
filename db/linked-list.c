@@ -324,11 +324,11 @@ int del(struct llNode* ll, uint64_t idx) {
 
 // Does what it says
 int delete_the_whole_entire_list(struct llNode* ll) {
-  while (ll->next_node->is_head == false) {
+  while (ll->next_node != ll->prev_node) {
 	del_p(ll->next_node);
   }
 
-  return del_p(ll);
+  return 0;
 }
 
 // tests
