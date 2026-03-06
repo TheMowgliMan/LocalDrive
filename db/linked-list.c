@@ -265,7 +265,7 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 	lla->next_smallest = current_end;
 	current_end->next_largest = lla;
 
-	current_end = tfwd_ts(ll, current_time);
+	current_end = ll->next_youngest; // This is always going to be the youngest item as far as our resolution can tell
 
 	lla->next_oldest = current_end->next_oldest;
 	lla->next_youngest = current_end;
