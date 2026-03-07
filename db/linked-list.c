@@ -54,7 +54,7 @@ void hcf(char* msg) {
   syslog(LOG_MAKEPRI(LOG_FTP, LOG_CRIT), "%s", msg);
   closelog();
 
-  fprintf(stderr, "%sFatal: %s%s", red(), msg, noc());
+  fprintf(stderr, "%sFatal: %s%s \n", red(), msg, noc());
 
   exit(2); // TODO: Use atexit to backup the database at crash!
 }
