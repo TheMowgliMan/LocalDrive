@@ -36,7 +36,7 @@ struct llNode {
   struct llNode* next_largest;
   struct llNode* next_smallest;
 
-  // pointers for next and last node by last access
+  // pointers for next and last node by creation time
   struct llNode* next_oldest;
   struct llNode* next_youngest;
 };
