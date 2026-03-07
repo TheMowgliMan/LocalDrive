@@ -41,10 +41,20 @@ struct llNode {
   struct llNode* next_youngest;
 };
 
+char* red() {
+  return "\u001b[31m";
+}
+
+char* noc() {
+  return "\u001b[0m";
+}
+
 void hcf(char* msg) {
   openlog("LocalDrive Database Index", LOG_PERROR | LOG_PID, LOG_MAKEPRI(LOG_FTP, LOG_CRIT));
   syslog(LOG_MAKEPRI(LOG_FTP, LOG_CRIT), "%s", msg);
   closelog();
+
+  fprintf(stderr, "%sFatal: %s%s", red(), msg, noc());
 
   exit(2); // TODO: Use atexit to backup the database at crash!
 }
@@ -55,8 +65,14 @@ void bump_timestamp(struct llNode* ll) {
 
 int set_fname(struct llNode* ll, char* fn) {
   if (strlen(fn) > 255) {
-	fprintf(stderr, "Error: filename too long: maximum 255, got %d.", strlen(fn));
+	fprintf(stderr, "%sError: filename too long: maximum 255, got %ld.%s", red(), strlen(fn), noc());
+	return LL_FILENAME_TOO_LONG_ERROR;
   }
+
+  memcpy(ll->fname, fn, sizeof(char) * strlen(fn));
+  bump_timestamp(ll);
+
+  return 0;
 }
 
 // A safe malloc call
@@ -103,7 +119,7 @@ struct llNode* get_n(struct llNode* ll, uint64_t item) {
   struct llNode* next = now->next_node;
 
   if (next == NULL) {
-	fprintf(stderr, "invalid list index for get_n(); there are no items in this list!");
+	fprintf(stderr, "%sError: invalid list index for get_n(); there are no items in this list!%s", red(), noc());
 	return ll;
   }
 
@@ -115,7 +131,7 @@ struct llNode* get_n(struct llNode* ll, uint64_t item) {
 	i++;
 
 	if (next == NULL) {
-	  fprintf(stderr, "invalid list index for get_n(); got %ld, but length is %ld", item, i);
+	  fprintf(stderr, "%sError: invalid list index for get_n(); got %ld, but length is %ld%s", red(), item, i, noc());
 	  return ll;
 	}
   }
@@ -142,7 +158,9 @@ struct llNode* tfwd_n(struct llNode* ll) {
 struct llNode* tone_rn(struct llNode* ll, int8_t dir) {
   if (!(abs(dir) == 1)) {
 	// dir has to equal one or negative one
-	fprintf(stderr, "'dir' for tone_rn() (aka 'Traverse One via Nodes, Relative) must be 1 or -1:\nActually got %d", dir);
+	fprintf(stderr, "%sError: 'dir' for tone_rn() (aka 'Traverse One via Nodes, Relative') must be 1 or -1:\n\
+			Actually got %d%s",
+			red(), dir, noc());
 	return ll;
   }
 
@@ -219,7 +237,7 @@ struct llNode* tfwd_ts(struct llNode* ll, int64_t size) {
 // appends an item to the ll (must be the head node!)
 int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
   if (ll->is_head == false) {
-	fprintf(stderr, "must pass head node of linked list to append()!");
+	fprintf(stderr, "%sError: must pass head node of linked list to append()!%s", red(), noc());
 	return LL_NOT_HEAD_NODE;
   }
   struct llNode* lla = (struct llNode*)xmalloc(sizeof(struct llNode));
@@ -230,7 +248,7 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
   lla->size = fsize;
 
   if (strlen(fn) > 255) {
-	fprintf(stderr, "filename max length is 255, got %ld", strlen(fn));
+	fprintf(stderr, "%sError: filename max length is 255, got %ld%s", red(), strlen(fn), noc());
 	return LL_FILENAME_TOO_LONG_ERROR;
   }
 
@@ -295,7 +313,7 @@ int del_p(struct llNode* ptr) {
   
   if (ptr->next_node != NULL) {
 	if (ptr->is_head == true) {
-	  fprintf(stderr, "cannot free the head node of a non-empty list! \n");
+	  fprintf(stderr, "%sError: Cannot free the head node of a non-empty list! \n%s", red(), noc());
 	  return LL_WRONG_NODE;
 	} else {
 	  // We have to unlink the node before we can free it
@@ -378,13 +396,13 @@ int main() {
   printf("Iterating 100,000 items...\n");
   char new_fname[] = "new filename!";
   for (struct llNode* iter = t; !(iter->next_node->is_head == true); iter = next_node(iter)) {
-	memcpy(iter->fname, new_fname, strlen(new_fname) * sizeof(char));
+	set_fname(iter, new_fname);
   }
 
   printf("Deleting the list...\n");
   delete_the_whole_entire_list(t);
 
-  printf("Done!\n");
+  hcf("No more tests to run!");
   
   return 0;
 }
