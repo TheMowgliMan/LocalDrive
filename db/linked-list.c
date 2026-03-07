@@ -59,8 +59,14 @@ void hcf(char* msg) {
   exit(2); // TODO: Use atexit to backup the database at crash!
 }
 
-void bump_timestamp(struct llNode* ll) {
+/* Quickly bumps the timestamp and revision of the file node. */
+void bump_meta(struct llNode* ll) {
   ll->timestamp = time(NULL);
+  ll->frevision = ll->frevision + 1;
+}
+
+void bump_revision(struct llNode* ll) {
+  ll->frevision = ll->frevision + 1;
 }
 
 int set_fname(struct llNode* ll, char* fn) {
@@ -70,9 +76,14 @@ int set_fname(struct llNode* ll, char* fn) {
   }
 
   memcpy(ll->fname, fn, sizeof(char) * strlen(fn));
-  bump_timestamp(ll);
+  bump_meta(ll);
 
   return 0;
+}
+
+void set_size(struct llNode* ll, uint64_t size) {
+  ll->size = size;
+  bump_meta(ll);
 }
 
 // A safe malloc call
