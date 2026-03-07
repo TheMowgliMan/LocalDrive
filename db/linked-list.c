@@ -53,6 +53,12 @@ void bump_timestamp(struct llNode* ll) {
   ll->timestamp = time(NULL);
 }
 
+int set_fname(struct llNode* ll, char* fn) {
+  if (strlen(fn) > 255) {
+	fprintf(stderr, "Error: filename too long: maximum 255, got %d.", strlen(fn));
+  }
+}
+
 // A safe malloc call
 void* xmalloc(size_t size) {
   void *pointer = malloc(size);
