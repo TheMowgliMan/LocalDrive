@@ -49,6 +49,10 @@ void hcf(char* msg) {
   exit(2); // TODO: Use atexit to backup the database at crash!
 }
 
+void bump_timestamp(struct llNode* ll) {
+  ll->timestamp = time(NULL);
+}
+
 // A safe malloc call
 void* xmalloc(size_t size) {
   void *pointer = malloc(size);
