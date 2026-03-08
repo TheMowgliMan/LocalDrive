@@ -246,14 +246,19 @@ struct llNode* tfwd_ts(struct llNode* ll, int64_t size) {
 
 /* Relink Node, Alphabetically:
    disconnects the node from its place in the list and links it anew. */
-int relink_a(struct llNode* ll, int8_t force_end) {
-  struct llNode* old_next = ll->next_alpha;
-  struct llNode* old_prev = ll->prev_alpha;
+int relink_a(struct llNode* ll, struct llNode* item, char* fn, int8_t force_end) {
+  struct llNode* old_next = item->next_alpha;
+  struct llNode* old_prev = item->prev_alpha;
 
   old_next->prev_alpha = old_prev;
   old_prev->next_alpha = old_next;
 
-  struct llNode* current_end = tfwd_as(ll, fn);
+  struct llNode* current_end = NULL;
+  if (force_end == false) {
+	current_end = tfwd_as(ll, fn);
+  } else {
+	current_end = ll->prev_alpha;
+  }
 
   ll->next_alpha = current_end->next_alpha;
   ll->prev_alpha = current_end;
