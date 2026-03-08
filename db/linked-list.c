@@ -260,9 +260,53 @@ int relink_a(struct llNode* ll, struct llNode* item, char* fn, int8_t force_end)
 	current_end = ll->prev_alpha;
   }
 
-  ll->next_alpha = current_end->next_alpha;
-  ll->prev_alpha = current_end;
-  current_end->next_alpha = ll;
+  item->next_alpha = current_end->next_alpha;
+  item->prev_alpha = current_end;
+  current_end->next_alpha = item;
+
+  return 0;
+}
+
+/* Relink Node, by Size:
+   disconnects the node from its place in the list and links it anew. */
+int relink_s(struct llNode* ll, struct llNode* item, uint64_t size, int8_t force_end) {
+  struct llNode* old_next = item->next_largest;
+  struct llNode* old_prev = item->next_smallest;
+
+  old_next->next_smallest = old_prev;
+  old_prev->next_largest = old_next;
+
+  struct llNode* current_end = NULL;
+  if (force_end == false) {
+	current_end = tfwd_ss(ll, size);
+  } else {
+	current_end = ll->next_smallest;
+  }
+
+  item->next_largest = current_end->next_largest;
+  item->next_smallest = current_end;
+  current_end->next_largest = item;
+
+  return 0;
+}
+
+/*
+  Relink Node, by Age, Forced:
+  disconnects the node from its place in the list and links it anew.
+  Assumes that the node is the newest node.
+*/
+int relink_sf(struct llNode* ll, struct llNode* item) {
+  struct llNode* old_next = item->next_largest;
+  struct llNode* old_prev = item->next_smallest;
+
+  old_next->next_youngest = old_prev;
+  old_prev->next_oldest = old_next;
+
+  struct llNode* current_end = ll->next_oldest;
+
+  item->next_youngest = current_end->next_youngest;
+  item->next_oldest = current_end;
+  current_end->next_youngest = item;
 
   return 0;
 }
@@ -326,11 +370,11 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 	lla->next_smallest = current_end;
 	current_end->next_largest = lla;
 
-	current_end = ll->next_youngest; // This is always going to be the youngest item as far as our resolution can tell
+	current_end = ll->next_oldest; // This is always going to be the youngest item as far as our resolution can tell
 
-	lla->next_oldest = current_end->next_oldest;
-	lla->next_youngest = current_end;
-	current_end->next_oldest = lla;
+	lla->next_youngest = current_end->next_youngest;
+	lla->next_oldest = current_end;
+	current_end->next_youngest = lla;
   }
 
   return 0;
