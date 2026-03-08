@@ -150,7 +150,6 @@ struct llNode* get_n(struct llNode* ll, uint64_t item) {
   return next;
 }
 
-
 // Traverse Forward via Nodes: gets the last item of the list as added to it
 struct llNode* tfwd_n(struct llNode* ll) {
   struct llNode* now = ll;
@@ -243,6 +242,24 @@ struct llNode* tfwd_ts(struct llNode* ll, int64_t size) {
   }
 
   return now;
+}
+
+/* Relink Node, Alphabetically:
+   disconnects the node from its place in the list and links it anew. */
+int relink_a(struct llNode* ll, int8_t force_end) {
+  struct llNode* old_next = ll->next_alpha;
+  struct llNode* old_prev = ll->prev_alpha;
+
+  old_next->prev_alpha = old_prev;
+  old_prev->next_alpha = old_next;
+
+  struct llNode* current_end = tfwd_as(ll, fn);
+
+  ll->next_alpha = current_end->next_alpha;
+  ll->prev_alpha = current_end;
+  current_end->next_alpha = ll;
+
+  return 0;
 }
 
 // appends an item to the ll (must be the head node!)
