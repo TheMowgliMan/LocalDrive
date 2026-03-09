@@ -49,6 +49,74 @@ char* noc() {
   return "\u001b[0m";
 }
 
+
+/* Relink Node, Alphabetically:
+   disconnects the node from its place in the list and links it anew. */
+int relink_a(struct llNode* ll, struct llNode* item, char* fn, int8_t force_end) {
+  struct llNode* old_next = item->next_alpha;
+  struct llNode* old_prev = item->prev_alpha;
+
+  old_next->prev_alpha = old_prev;
+  old_prev->next_alpha = old_next;
+
+  struct llNode* current_end = NULL;
+  if (force_end == false) {
+	current_end = tfwd_as(ll, fn);
+  } else {
+	current_end = ll->prev_alpha;
+  }
+
+  item->next_alpha = current_end->next_alpha;
+  item->prev_alpha = current_end;
+  current_end->next_alpha = item;
+
+  return 0;
+}
+
+/* Relink Node, by Size:
+   disconnects the node from its place in the list and links it anew. */
+int relink_s(struct llNode* ll, struct llNode* item, uint64_t size, int8_t force_end) {
+  struct llNode* old_next = item->next_largest;
+  struct llNode* old_prev = item->next_smallest;
+
+  old_next->next_smallest = old_prev;
+  old_prev->next_largest = old_next;
+
+  struct llNode* current_end = NULL;
+  if (force_end == false) {
+	current_end = tfwd_ss(ll, size);
+  } else {
+	current_end = ll->next_smallest;
+  }
+
+  item->next_largest = current_end->next_largest;
+  item->next_smallest = current_end;
+  current_end->next_largest = item;
+
+  return 0;
+}
+
+/*
+  Relink Node, by Age, Forced:
+  disconnects the node from its place in the list and links it anew.
+  Assumes that the node is the newest node.
+*/
+int relink_sf(struct llNode* ll, struct llNode* item) {
+  struct llNode* old_next = item->next_largest;
+  struct llNode* old_prev = item->next_smallest;
+
+  old_next->next_youngest = old_prev;
+  old_prev->next_oldest = old_next;
+
+  struct llNode* current_end = ll->next_oldest;
+
+  item->next_youngest = current_end->next_youngest;
+  item->next_oldest = current_end;
+  current_end->next_youngest = item;
+
+  return 0;
+}
+
 void hcf(char* msg) {
   openlog("LocalDrive Database Index", LOG_PERROR | LOG_PID, LOG_MAKEPRI(LOG_FTP, LOG_CRIT));
   syslog(LOG_MAKEPRI(LOG_FTP, LOG_CRIT), "%s", msg);
@@ -242,73 +310,6 @@ struct llNode* tfwd_ts(struct llNode* ll, int64_t size) {
   }
 
   return now;
-}
-
-/* Relink Node, Alphabetically:
-   disconnects the node from its place in the list and links it anew. */
-int relink_a(struct llNode* ll, struct llNode* item, char* fn, int8_t force_end) {
-  struct llNode* old_next = item->next_alpha;
-  struct llNode* old_prev = item->prev_alpha;
-
-  old_next->prev_alpha = old_prev;
-  old_prev->next_alpha = old_next;
-
-  struct llNode* current_end = NULL;
-  if (force_end == false) {
-	current_end = tfwd_as(ll, fn);
-  } else {
-	current_end = ll->prev_alpha;
-  }
-
-  item->next_alpha = current_end->next_alpha;
-  item->prev_alpha = current_end;
-  current_end->next_alpha = item;
-
-  return 0;
-}
-
-/* Relink Node, by Size:
-   disconnects the node from its place in the list and links it anew. */
-int relink_s(struct llNode* ll, struct llNode* item, uint64_t size, int8_t force_end) {
-  struct llNode* old_next = item->next_largest;
-  struct llNode* old_prev = item->next_smallest;
-
-  old_next->next_smallest = old_prev;
-  old_prev->next_largest = old_next;
-
-  struct llNode* current_end = NULL;
-  if (force_end == false) {
-	current_end = tfwd_ss(ll, size);
-  } else {
-	current_end = ll->next_smallest;
-  }
-
-  item->next_largest = current_end->next_largest;
-  item->next_smallest = current_end;
-  current_end->next_largest = item;
-
-  return 0;
-}
-
-/*
-  Relink Node, by Age, Forced:
-  disconnects the node from its place in the list and links it anew.
-  Assumes that the node is the newest node.
-*/
-int relink_sf(struct llNode* ll, struct llNode* item) {
-  struct llNode* old_next = item->next_largest;
-  struct llNode* old_prev = item->next_smallest;
-
-  old_next->next_youngest = old_prev;
-  old_prev->next_oldest = old_next;
-
-  struct llNode* current_end = ll->next_oldest;
-
-  item->next_youngest = current_end->next_youngest;
-  item->next_oldest = current_end;
-  current_end->next_youngest = item;
-
-  return 0;
 }
 
 // appends an item to the ll (must be the head node!)
