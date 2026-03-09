@@ -49,6 +49,128 @@ char* noc() {
   return "\u001b[0m";
 }
 
+/* Get via Nodes:
+   gets item *x* after head */
+struct llNode* get_n(struct llNode* ll, uint64_t item) {
+  struct llNode* now = ll;
+  struct llNode* next = now->next_node;
+
+  if (next == NULL) {
+	fprintf(stderr, "%sError: invalid list index for get_n(); there are no items in this list!%s", red(), noc());
+	return ll;
+  }
+
+  uint64_t i = 0;
+  while (i < item) {
+	now = next;
+	next = now->next_node;
+
+	i++;
+
+	if (next == NULL) {
+	  fprintf(stderr, "%sError: invalid list index for get_n(); got %ld, but length is %ld%s", red(), item, i, noc());
+	  return ll;
+	}
+  }
+
+  return next;
+}
+
+
+// Traverse Forward via Nodes: gets the last item of the list as added to it
+struct llNode* tfwd_n(struct llNode* ll) {
+  struct llNode* now = ll;
+  struct llNode* next = now->next_node;
+
+  while (next->is_head == false) {
+	now = next;
+	next = now->next_node;
+  }
+
+  return now;
+}
+
+/* Traverse One via Nodes, Relative:
+   go forward or back a node along the list items */
+struct llNode* tone_rn(struct llNode* ll, int8_t dir) {
+  if (!(abs(dir) == 1)) {
+	// dir has to equal one or negative one
+	fprintf(stderr, "%sError: 'dir' for tone_rn() (aka 'Traverse One via Nodes, Relative') must be 1 or -1:\n\
+			Actually got %d%s",
+			red(), dir, noc());
+	return ll;
+  }
+
+  if (dir == 1) {
+	return ll->next_node;
+  }
+
+  return ll->prev_node;
+}
+
+/* These next two functions are aliases for tone_rn(ll, 1) and tone_rn(ll, -1) respectively */
+struct llNode* next_node(struct llNode* ll) {
+  return tone_rn(ll, 1);
+}
+
+struct llNode* prev_node(struct llNode* ll) {
+  return tone_rn(ll, -1);
+}
+
+/* Traverse an Amount via Nodes, Relative:
+   moves forward or back an amount along the list items */
+struct llNode* tamt_rn(struct llNode* ll, int64_t start, int32_t offset) {
+  int8_t direction = offset / abs(offset); // This should be 1 or -1 for `tone_rn()` above
+  struct llNode *now = get_n(ll, start);
+  
+  for (int32_t i = 0; i != offset; i += direction) {
+	now = tone_rn(now, direction);
+  }
+
+  return now;
+}
+
+// Traverse Forwards Alphabetically, Sorted: gets the highest fname item that is less than the input string
+struct llNode* tfwd_as(struct llNode* ll, char* str) {
+  struct llNode* now = ll;
+  struct llNode* next = now->next_alpha;
+
+  while (next->is_head == false && strcmp(next->fname, str) < 0) {
+	now = next;
+	next = now->next_alpha;
+  }
+
+  return now;
+}
+
+/* Traverse Forwards by Size, Sorted:
+   gets the biggest item smaller than size */
+struct llNode* tfwd_ss(struct llNode* ll, uint64_t size) {
+  struct llNode* now = ll;
+  struct llNode* next = now->next_largest;
+
+  while (next->is_head == false && next->size < size) {
+	now = next;
+	next = now->next_largest;
+  }
+
+  return now;
+}
+
+/* Traverse Forwards by Timestamp, Sorted:
+   gets the oldest item newer than size */
+struct llNode* tfwd_ts(struct llNode* ll, int64_t size) {
+  struct llNode* now = ll;
+  struct llNode* next = now->next_oldest;
+
+  while (next->is_head == false && next->timestamp > size) {
+	now = next;
+	next = now->next_oldest;
+  }
+
+  return now;
+}
+
 
 /* Relink Node, Alphabetically:
    disconnects the node from its place in the list and links it anew. */
@@ -189,127 +311,6 @@ struct llNode* new_ll() {
   ll->next_youngest = NULL;
 
   return ll;
-}
-
-/* Get via Nodes:
-   gets item *x* after head */
-struct llNode* get_n(struct llNode* ll, uint64_t item) {
-  struct llNode* now = ll;
-  struct llNode* next = now->next_node;
-
-  if (next == NULL) {
-	fprintf(stderr, "%sError: invalid list index for get_n(); there are no items in this list!%s", red(), noc());
-	return ll;
-  }
-
-  uint64_t i = 0;
-  while (i < item) {
-	now = next;
-	next = now->next_node;
-
-	i++;
-
-	if (next == NULL) {
-	  fprintf(stderr, "%sError: invalid list index for get_n(); got %ld, but length is %ld%s", red(), item, i, noc());
-	  return ll;
-	}
-  }
-
-  return next;
-}
-
-// Traverse Forward via Nodes: gets the last item of the list as added to it
-struct llNode* tfwd_n(struct llNode* ll) {
-  struct llNode* now = ll;
-  struct llNode* next = now->next_node;
-
-  while (next->is_head == false) {
-	now = next;
-	next = now->next_node;
-  }
-
-  return now;
-}
-
-/* Traverse One via Nodes, Relative:
-   go forward or back a node along the list items */
-struct llNode* tone_rn(struct llNode* ll, int8_t dir) {
-  if (!(abs(dir) == 1)) {
-	// dir has to equal one or negative one
-	fprintf(stderr, "%sError: 'dir' for tone_rn() (aka 'Traverse One via Nodes, Relative') must be 1 or -1:\n\
-			Actually got %d%s",
-			red(), dir, noc());
-	return ll;
-  }
-
-  if (dir == 1) {
-	return ll->next_node;
-  }
-
-  return ll->prev_node;
-}
-
-/* These next two functions are aliases for tone_rn(ll, 1) and tone_rn(ll, -1) respectively */
-struct llNode* next_node(struct llNode* ll) {
-  return tone_rn(ll, 1);
-}
-
-struct llNode* prev_node(struct llNode* ll) {
-  return tone_rn(ll, -1);
-}
-
-/* Traverse an Amount via Nodes, Relative:
-   moves forward or back an amount along the list items */
-struct llNode* tamt_rn(struct llNode* ll, int64_t start, int32_t offset) {
-  int8_t direction = offset / abs(offset); // This should be 1 or -1 for `tone_rn()` above
-  struct llNode *now = get_n(ll, start);
-  
-  for (int32_t i = 0; i != offset; i += direction) {
-	now = tone_rn(now, direction);
-  }
-
-  return now;
-}
-
-// Traverse Forwards Alphabetically, Sorted: gets the highest fname item that is less than the input string
-struct llNode* tfwd_as(struct llNode* ll, char* str) {
-  struct llNode* now = ll;
-  struct llNode* next = now->next_alpha;
-
-  while (next->is_head == false && strcmp(next->fname, str) < 0) {
-	now = next;
-	next = now->next_alpha;
-  }
-
-  return now;
-}
-
-/* Traverse Forwards by Size, Sorted:
-   gets the biggest item smaller than size */
-struct llNode* tfwd_ss(struct llNode* ll, uint64_t size) {
-  struct llNode* now = ll;
-  struct llNode* next = now->next_largest;
-
-  while (next->is_head == false && next->size < size) {
-	now = next;
-	next = now->next_largest;
-  }
-
-  return now;
-}
-
-/* Traverse Forwards by Timestamp, Sorted:
-   gets the oldest item newer than size */
-struct llNode* tfwd_ts(struct llNode* ll, int64_t size) {
-  struct llNode* now = ll;
-  struct llNode* next = now->next_oldest;
-
-  while (next->is_head == false && next->timestamp > size) {
-	now = next;
-	next = now->next_oldest;
-  }
-
-  return now;
 }
 
 // appends an item to the ll (must be the head node!)
