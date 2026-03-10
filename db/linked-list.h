@@ -27,5 +27,6 @@ struct llNode* tfwd_ts(struct llNode* ll, int64_t size);
 
 int relink_a(struct llNode* ll, struct llNode* item, char* fn, int8_t force_end);
 int relink_s(struct llNode* ll, struct llNode* item, uint64_t size, int8_t force_end);
+int relink_rf(struct llNode* ll, struct llNode* item);
 
 #endif
