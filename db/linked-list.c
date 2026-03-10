@@ -484,6 +484,8 @@ int main() {
 	set_fname(t, iter, new_fname);
   }
 
+  printf("%s\n", get_n(t, 70)->fname);
+
   printf("Deleting the list...\n");
   delete_the_whole_entire_list(t);
 
