@@ -223,7 +223,7 @@ int relink_s(struct llNode* ll, struct llNode* item, uint64_t size, int8_t force
   disconnects the node from its place in the list and links it anew.
   Assumes that the node is the newest node.
 */
-int relink_sf(struct llNode* ll, struct llNode* item) {
+int relink_rf(struct llNode* ll, struct llNode* item) {
   struct llNode* old_next = item->next_largest;
   struct llNode* old_prev = item->next_smallest;
 
@@ -250,30 +250,36 @@ void hcf(char* msg) {
 }
 
 /* Quickly bumps the timestamp and revision of the file node. */
-void bump_meta(struct llNode* ll) {
+void bump_meta(struct llNode* llh, struct llNode* ll) {
   ll->timestamp = time(NULL);
   ll->frevision = ll->frevision + 1;
+
+  relink_rf(llh, ll);
 }
 
 void bump_revision(struct llNode* ll) {
   ll->frevision = ll->frevision + 1;
 }
 
-int set_fname(struct llNode* ll, char* fn) {
+int set_fname(struct llNode* llh, struct llNode* ll, char* fn) {
   if (strlen(fn) > 255) {
 	fprintf(stderr, "%sError: filename too long: maximum 255, got %ld.%s", red(), strlen(fn), noc());
 	return LL_FILENAME_TOO_LONG_ERROR;
   }
 
   memcpy(ll->fname, fn, sizeof(char) * strlen(fn));
-  bump_meta(ll);
+  bump_meta(ll, llh);
+
+  relink_a(llh, ll, fn, false);
 
   return 0;
 }
 
-void set_size(struct llNode* ll, uint64_t size) {
+void set_size(struct llNode* llh, struct llNode* ll, uint64_t size) {
   ll->size = size;
-  bump_meta(ll);
+  bump_meta(ll, llh);
+
+  relink_s(llh, ll, size, false);
 }
 
 // A safe malloc call
@@ -475,7 +481,7 @@ int main() {
   printf("Iterating 100,000 items...\n");
   char new_fname[] = "new filename!";
   for (struct llNode* iter = t; !(iter->next_node->is_head == true); iter = next_node(iter)) {
-	set_fname(iter, new_fname);
+	set_fname(t, iter, new_fname);
   }
 
   printf("Deleting the list...\n");
