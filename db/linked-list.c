@@ -261,7 +261,7 @@ int set_fname(struct llNode* llh, struct llNode* ll, char* fn) {
   }
 
   memcpy(ll->fname, fn, sizeof(char) * strlen(fn));
-  bump_meta(ll, llh);
+  bump_meta(llh, ll);
 
   relink_a(llh, ll, fn, false);
 

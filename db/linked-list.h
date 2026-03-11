@@ -8,7 +8,7 @@
 
 #define LL_FILENAME_TOO_LONG_ERROR 1
 #define LL_NOT_HEAD_NODE 2
-#define LL_bAD_INDEX 3
+#define LL_BAD_INDEX 3
 #define LL_WRONG_NODE 4
 
 struct llNode;
@@ -21,12 +21,25 @@ struct llNode* next_node(struct llNode* ll);
 struct llNode* prev_node(struct llNode* ll);
 struct llNode* tamt_rn(struct llNode* ll, int64_t start, int32_t offset);
 
-struct llNode* tfwd_as(struct llNode ll, char* str);
+struct llNode* tfwd_as(struct llNode* ll, char* str);
 struct llNode* tfwd_ss(struct llNode* ll, uint64_t size);
 struct llNode* tfwd_ts(struct llNode* ll, int64_t size);
 
 int relink_a(struct llNode* ll, struct llNode* item, char* fn, int8_t force_end);
 int relink_s(struct llNode* ll, struct llNode* item, uint64_t size, int8_t force_end);
 int relink_rf(struct llNode* ll, struct llNode* item);
+
+void bump_meta(struct llNode* llh, struct llNode* ll);
+void bump_revision(struct llNode* ll);
+
+int set_fname(struct llNode* llh, struct llNode* ll, char* fn);
+void set_size(struct llNode* llh, struct llNode* ll, uint64_t size);
+
+struct llNode* new_ll();
+int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision);
+
+int del_p(struct llNode* ptr);
+int del(struct llNode* ll, uint64_t idx);
+int delete_the_whole_entire_list(struct llNode* ll);
 
 #endif
