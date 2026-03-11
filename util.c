@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <syslog.h>
+#include <stdlib.h>
 #include "util.h"
 
 char* red() {
@@ -22,7 +25,7 @@ void* xmalloc(size_t size, char* user) {
   void *pointer = malloc(size);
   if (pointer == 0 || pointer == NULL) {
 	printf("From %s:", user);
-	hcf("Failed to allocate virtual memory during xmalloc call!");
+	hcf("Failed to allocate virtual memory during xmalloc call!", user);
   }
 
   return pointer;

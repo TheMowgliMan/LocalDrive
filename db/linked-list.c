@@ -5,6 +5,7 @@
 #include <time.h>
 #include <syslog.h>
 #include "linked-list.h"
+#include "../util.h"
 
 // A struct for a single node in the linked list.
 struct llNode;
@@ -33,14 +34,6 @@ struct llNode {
   struct llNode* next_oldest;
   struct llNode* next_youngest;
 };
-
-char* red() {
-  return "\u001b[31m";
-}
-
-char* noc() {
-  return "\u001b[0m";
-}
 
 /* Get via Nodes:
    gets item *x* after head */
@@ -232,16 +225,6 @@ int relink_rf(struct llNode* ll, struct llNode* item) {
   return 0;
 }
 
-void hcf(char* msg) {
-  openlog("LocalDrive Database Index", LOG_PERROR | LOG_PID, LOG_MAKEPRI(LOG_FTP, LOG_CRIT));
-  syslog(LOG_MAKEPRI(LOG_FTP, LOG_CRIT), "%s", msg);
-  closelog();
-
-  fprintf(stderr, "%sFatal: %s%s \n", red(), msg, noc());
-
-  exit(2); // TODO: Use atexit to backup the database at crash!
-}
-
 /* Quickly bumps the timestamp and revision of the file node. */
 void bump_meta(struct llNode* llh, struct llNode* ll) {
   ll->timestamp = time(NULL);
@@ -275,19 +258,9 @@ void set_size(struct llNode* llh, struct llNode* ll, uint64_t size) {
   relink_s(llh, ll, size, false);
 }
 
-// A safe malloc call
-void* xmalloc(size_t size) {
-  void *pointer = malloc(size);
-  if (pointer == 0 || pointer == NULL) {
-	hcf("Failed to allocate virtual memory during xmalloc call in database!");
-  }
-
-  return pointer;
-}
-
 // create a linked list
 struct llNode* new_ll() {
-  struct llNode* ll = (struct llNode*)xmalloc(sizeof(struct llNode));
+  struct llNode* ll = (struct llNode*)xmalloc(sizeof(struct llNode), "struct llNode* new_ll() @ linked-list.c");
   
   ll->is_head = true;
   ll->timestamp = time(NULL);
@@ -318,7 +291,7 @@ int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
 	fprintf(stderr, "%sError: must pass head node of linked list to append()!%s", red(), noc());
 	return LL_NOT_HEAD_NODE;
   }
-  struct llNode* lla = (struct llNode*)xmalloc(sizeof(struct llNode));
+  struct llNode* lla = (struct llNode*)xmalloc(sizeof(struct llNode), "int append() @ linked-list.c");
 
   lla->is_head = false;
   lla->timestamp = time(NULL);
@@ -482,7 +455,7 @@ int main() {
   printf("Deleting the list...\n");
   delete_the_whole_entire_list(t);
 
-  hcf("No more tests to run!");
+  hcf("No more tests to run!", "int main() @ linked-list.c");
   
   return 0;
 }
