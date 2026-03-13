@@ -6,7 +6,7 @@
 
 #include "../util.h"
 
-#define BUF_LEN 4096
+#define BUF_LEN 2048
 #define FILE_OPEN_ATTEMPTS 250
 
 struct sllNode {
@@ -19,6 +19,7 @@ struct fileIOCtx {
   char fname[512];
   
   struct sllNode *fdata;
+  struct sllNode *current_read;
 
   uint16_t attempts;
 };
@@ -50,6 +51,7 @@ struct fileIOCtx* fileIOCtxInit(char* name) {
   ctx->fhandler = NULL;
   ctx->fdata = NULL;
   ctx->attempts = 0;
+  ctx->current_read = NULL;
 
   return ctx;
 }
@@ -72,7 +74,7 @@ int fileIOCtxLoad(struct fileIOCtx* ioctx) {
   struct sllNode *node = ioctx->fdata;
   size_t read = BUF_LEN;
 
-  while (read == BUF_LEN) {
+  while (node != NULL) {
 	read = fread_unlocked(node->buf, BUF_LEN, sizeof(char), ioctx->fhandler);
 
 	if (read == BUF_LEN) {
@@ -86,4 +88,8 @@ int fileIOCtxLoad(struct fileIOCtx* ioctx) {
   }
 
   return 0;
+}
+
+int fileIOCtxRead(struct fileIOCtx* ioctx, char* buf[static BUF_LEN]) {
+  
 }
