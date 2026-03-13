@@ -4,12 +4,14 @@
 #include "../util.h"
 #include "linked-list.h"
 
-struct userWrapper;
-
 struct userWrapper {
   struct llNode* user_meta;
   struct llNode* user_files;
 };
+
+struct allUserData {
+  uint32_t count;
+} users_meta;
 
 // Used to link users together
 struct llNode* users_meta_head = NULL;
@@ -30,8 +32,7 @@ int initialize() {
   
   // We use an array of users because it doesn't change often
   // ...maybe make it a linked list?
-  struct userWrapper* users[1];
-  users[1] = generate_user("root");
+  struct userWrapper* users = generate_user("root");
 }
 
 // TODO: generate a way to keep track of the user folder, hash the users name as a folder name?
