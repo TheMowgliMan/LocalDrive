@@ -87,9 +87,23 @@ int fileIOCtxLoad(struct fileIOCtx* ioctx) {
 	node = node->next;
   }
 
+  ioctx->current_read = ioctx->fdata;
+
   return 0;
 }
 
 int fileIOCtxRead(struct fileIOCtx* ioctx, char* buf[static BUF_LEN]) {
-  
+  if (ioctx->current_read != NULL) {
+	memcpy(buf, ioctx->current_read->buf, sizeof(char) * BUF_LEN);
+
+	ioctx->current_read = ioctx->current_read->next;
+	if (ioctx->current_read == NULL) {
+	  ioctx->current_read = ioctx->fdata;
+	}
+	
+	return 0;
+  } else {
+	return 0;
+  }
 }
+
