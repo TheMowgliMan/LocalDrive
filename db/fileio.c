@@ -19,7 +19,6 @@ struct fileIOCtx {
   char fname[512];
   
   struct sllNode *fdata;
-  int32_t len;
 
   uint16_t attempts;
 };
@@ -64,5 +63,27 @@ int fileIOCtxOpen(struct fileIOCtx *ctx, const char *opentype) {
   }
 
   ctx->fhandler = f;
+  return 0;
+}
+
+int fileIOCtxLoad(struct fileIOCtx* ioctx) {
+  flockfile(ioctx->fhandler);
+
+  struct sllNode *node = ioctx->fdata;
+  size_t read = BUF_LEN;
+
+  while (read == BUF_LEN) {
+	read = fread_unlocked(node->buf, BUF_LEN, sizeof(char), ioctx->fhandler);
+
+	if (read == BUF_LEN) {
+	  node->next = (struct sllNode*)xmalloc(sizeof(struct sllNode),
+											"int fileIOCtxLoad() @ fileio.c");
+	} else {
+	  node->next = NULL;
+	}
+	
+	node = node->next;
+  }
+
   return 0;
 }
