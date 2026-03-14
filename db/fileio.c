@@ -43,6 +43,29 @@ FILE* try_open(struct fileIOCtx* ioctx, const char *opentype) {
   return fctx;
 }
 
+int free_ioctx_sll(struct fileIOCtx* ioctx) {
+  if (ioctx->fdata == NULL) {
+	return 0;
+  }
+  
+  struct sllNode* node = ioctx->fdata;
+  while(node->next != NULL) {
+	struct sllNode* next = node->next;
+	free(node);
+	node = next;
+  }
+
+  return 0;
+}
+
+int fileIOCtxUnload(struct fileIOCtx* ioctx) {
+  free_ioctx_sll(ioctx);
+  ioctx->fdata = NULL;
+  ioctx->current_read = NULL;
+
+  return 0;
+}
+
 struct fileIOCtx* fileIOCtxInit(char* name) {
   struct fileIOCtx* ctx = (struct fileIOCtx*)xmalloc(sizeof(struct fileIOCtx),
 													 "struct fileIOCtx* fileIOCtxInit() @ fileio.c");
@@ -69,6 +92,8 @@ int fileIOCtxOpen(struct fileIOCtx *ctx, const char *opentype) {
 }
 
 int fileIOCtxLoad(struct fileIOCtx* ioctx) {
+  fileIOCtxUnload(ioctx);
+  
   flockfile(ioctx->fhandler);
 
   struct sllNode *node = ioctx->fdata;
@@ -86,6 +111,8 @@ int fileIOCtxLoad(struct fileIOCtx* ioctx) {
 	
 	node = node->next;
   }
+
+  funlockfile(ioctx->fhandler);
 
   ioctx->current_read = ioctx->fdata;
 
@@ -107,3 +134,48 @@ int fileIOCtxRead(struct fileIOCtx* ioctx, char* buf[static BUF_LEN]) {
   }
 }
 
+int fileIOCtxClose(struct fileIOCtx* ioctx) {
+  int status = fclose(ioctx->fhandler);
+  return status;
+}
+
+int fileIOCtxFree(struct fileIOCtx* ioctx) {
+  free_ioctx_sll(ioctx);
+
+  free(ioctx);
+
+  return 0;
+}
+
+int fileIOCtxPackage(struct fileIOCtx* ioctx, char* buf[static BUF_LEN]) {
+  if (ioctx->fdata == NULL) {
+	ioctx->fdata = (struct sllNode*)xmalloc(sizeof(struct sllNode),
+											"int fileIOCtxPackage() @ fileio.c");
+
+	ioctx->current_read = ioctx->fdata;
+  }
+
+  memcpy(ioctx->current_read->buf, buf, sizeof(char) * BUF_LEN);
+  ioctx->current_read->next = (struct sllNode*)xmalloc(sizeof(struct sllNode),
+													   "int fileIOCtxPackage() @ fileio.c");
+  ioctx->current_read = ioctx->current_read->next;
+
+  return 0;
+}
+
+int fileIOCtxFlush(struct fileIOCtx* ioctx) {
+  if (ioctx->fdata == NULL) {
+	fprintf(stderr, "%sNote: attempted to flush an unpackaged context. Doing nothing...%s",
+			red(), noc());
+	
+	return 0;
+  }
+
+  ioctx->current_read = ioctx->fdata;
+
+  flockfile(ioctx->fhandler);
+
+  while(ioctx->current_read != NULL) {
+	fwrite_unlocked(ioctx->current_read->buf, sizeof(char), BUF_LEN, ioctx->fhandler);
+  }
+}
