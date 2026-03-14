@@ -177,5 +177,10 @@ int fileIOCtxFlush(struct fileIOCtx* ioctx) {
 
   while(ioctx->current_read != NULL) {
 	fwrite_unlocked(ioctx->current_read->buf, sizeof(char), BUF_LEN, ioctx->fhandler);
+	ioctx->current_read = ioctx->current_read->next;
   }
+
+  funlockfile(ioctx->fhandler);
+
+  return 0;
 }
