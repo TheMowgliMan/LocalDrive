@@ -1,3 +1,5 @@
+#include "fileio.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -5,7 +7,6 @@
 #include <unistd.h>
 
 #include "../util.h"
-#include "fileio.h"
 
 struct sllNode {
   char *buf[BUF_LEN];
