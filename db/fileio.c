@@ -5,9 +5,7 @@
 #include <unistd.h>
 
 #include "../util.h"
-
-#define BUF_LEN 2048
-#define FILE_OPEN_ATTEMPTS 250
+#include "fileio.h"
 
 struct sllNode {
   char *buf[BUF_LEN];
@@ -91,9 +89,14 @@ int fileIOCtxOpen(struct fileIOCtx *ctx, const char *opentype) {
   return 0;
 }
 
+int fileIOCtxClose(struct fileIOCtx* ioctx) {
+  int status = fclose(ioctx->fhandler);
+  return status;
+}
+
 int fileIOCtxLoad(struct fileIOCtx* ioctx) {
   fileIOCtxUnload(ioctx);
-  
+  fileIOCtxOpen(ioctx, "r");
   flockfile(ioctx->fhandler);
 
   struct sllNode *node = ioctx->fdata;
@@ -113,6 +116,7 @@ int fileIOCtxLoad(struct fileIOCtx* ioctx) {
   }
 
   funlockfile(ioctx->fhandler);
+  fileIOCtxClose(ioctx);
 
   ioctx->current_read = ioctx->fdata;
 
@@ -134,15 +138,11 @@ int fileIOCtxRead(struct fileIOCtx* ioctx, char* buf[static BUF_LEN]) {
   }
 }
 
-int fileIOCtxClose(struct fileIOCtx* ioctx) {
-  int status = fclose(ioctx->fhandler);
-  return status;
-}
-
 int fileIOCtxFree(struct fileIOCtx* ioctx) {
   free_ioctx_sll(ioctx);
 
   free(ioctx);
+  ioctx = NULL;
 
   return 0;
 }
