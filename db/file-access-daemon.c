@@ -20,6 +20,8 @@ struct llNode* users_meta_head = NULL;
 
 struct userWrapper* users[1];
 
+static uint64_t starter = 200560490131;
+
 struct userWrapper* generate_user(char* name) {
   struct userWrapper* u = (struct userWrapper*)xmalloc(sizeof(struct userWrapper),
 													   "struct userWrapper* generate_user() @ fileio.c");
@@ -45,22 +47,22 @@ int initialize() {
 // TODO: generate a way to keep track of the user folder, hash the users name as a folder name?
 // Or just use a counter?
 uint64_t hash_char(char character, uint32_t i) {
-  srand(character);
+  srand((character + i) * i);
   
   uint64_t c = (uint64_t)character;
-  uint64_t not = ~(((c + i * 497) * 17) << 0x03);
+  uint64_t not = ~(((c + i * rand()) * 17) << 0x03);
   uint64_t and = ((c + i) << 2 * rand()) & ((c << 5) * 217);
-  uint64_t or = (c + i * 2967) << 5 | c << 3;
+  uint64_t or = (c + i * 2967) << 5 | (c * rand()) << 3;
 
-  return ((c * i) % 2963 + (c ^ not & and ^ or)) | ((i + 71) * 4977177437865208637);
+  return ((c * i) + (((c * i * 1111111111111111111) ^ not) & (and ^ or * 658493658747))) ^ (i * 4977177437865208637);
 }
 
-char* get_user_folder_name(struct userWrapper* user);
+char* get_user_folder_name(struct userWrapper* user) {
+  uint64_t hash = starter;
 
-int main(){
-  char test_string[] = "Caleb Reeves";
-
-  for(int i = 0; test_string[i]; i++) {
-	printf("%lu\n", hash_char(test_string[i], i));
+  for(int i = 0; user->user_meta->fname[i]; i++) {
+	hash *= hash ^ hash_char(user->user_meta->fname[i], i);
   }
+
+  return hash;
 }
