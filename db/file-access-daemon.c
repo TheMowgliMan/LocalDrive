@@ -48,18 +48,19 @@ uint64_t hash_char(char character, uint32_t i) {
   srand(character);
   
   uint64_t c = (uint64_t)character;
-  uint64_t not = ~((c * 17) << 0x03);
-  uint64_t and = (c << 2 * rand()) & (c << 5 * 217 % 51);
-  uint64_t or = c << 19 | c << 17;
+  uint64_t not = ~(((c + i * 497) * 17) << 0x03);
+  uint64_t and = ((c + i) << 2 * rand()) & ((c << 5) * 217);
+  uint64_t or = (c + i * 2967) << 5 | c << 3;
 
-  return ((c * i) % 2963 + (c ^ not ^ and ^ or)) ^ (i * 4977);
+  return ((c * i) % 2963 + (c ^ not & and ^ or)) | ((i + 71) * 4977177437865208637);
 }
 
 char* get_user_folder_name(struct userWrapper* user);
 
 int main(){
-  printf("H @ 1: %lu\n", hash_char('H', 1));
-  printf("1 @ 0: %lu\n", hash_char('1', 0));
-  printf("_ @ 5: %lu\n", hash_char('_', 5));
-  printf("t @ 23: %lu\n", hash_char('t', 23));
+  char test_string[] = "Caleb Reeves";
+
+  for(int i = 0; test_string[i]; i++) {
+	printf("%lu\n", hash_char(test_string[i], i));
+  }
 }
