@@ -4,7 +4,7 @@
 
 #include "../util.h"
 #include "linked-list.h"
-#include "fileio.c"
+#include "fileio.h"
 
 struct userWrapper {
   struct llNode* user_meta;
@@ -52,14 +52,14 @@ uint64_t hash_char(char character, uint32_t i) {
   uint64_t and = (c << 2 * rand()) & (c << 5 * 217 % 51);
   uint64_t or = c << 19 | c << 17;
 
-  return (c * i) % 2963 + (c ^ not ^ and ^ or);
+  return ((c * i) % 2963 + (c ^ not ^ and ^ or)) ^ (i * 4977);
 }
 
 char* get_user_folder_name(struct userWrapper* user);
 
 int main(){
-  printf("H @ 1: %ld\n", hash_char('H', 1));
-  printf("1 @ 0: %ld\n", hash_char('1', 0));
-  printf("_ @ 5: %ld\n", hash_char('_', 5));
-  printf("t @ 23: %ld\n", hash_char('t', 23));
+  printf("H @ 1: %lu\n", hash_char('H', 1));
+  printf("1 @ 0: %lu\n", hash_char('1', 0));
+  printf("_ @ 5: %lu\n", hash_char('_', 5));
+  printf("t @ 23: %lu\n", hash_char('t', 23));
 }
