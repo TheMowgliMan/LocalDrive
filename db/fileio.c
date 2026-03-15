@@ -91,6 +91,7 @@ int fileIOCtxOpen(struct fileIOCtx *ctx, const char *opentype) {
 
 int fileIOCtxClose(struct fileIOCtx* ioctx) {
   int status = fclose(ioctx->fhandler);
+  ioctx->fhandler = NULL;
   return status;
 }
 
@@ -172,7 +173,8 @@ int fileIOCtxFlush(struct fileIOCtx* ioctx) {
   }
 
   ioctx->current_read = ioctx->fdata;
-
+  
+  fileIOCtxOpen(ioctx, "w");
   flockfile(ioctx->fhandler);
 
   while(ioctx->current_read != NULL) {
@@ -181,6 +183,7 @@ int fileIOCtxFlush(struct fileIOCtx* ioctx) {
   }
 
   funlockfile(ioctx->fhandler);
+  fileIOCtxClose(ioctx);
 
   return 0;
 }

@@ -27,7 +27,7 @@ struct fileIOCtx {
 FILE* try_open(struct fileIOCtx* ioctx, const char *opentype);
 int free_ioctx_sll(struct fileIOCtx* ioctx);
 
-int fileIOCtxUnload(struct fileIOCtx ioctx);
+int fileIOCtxUnload(struct fileIOCtx* ioctx);
 struct fileIOCtx* fileIOCtxInit(char* name);
 
 int fileIOCtxOpen(struct fileIOCtx *ctx, const char *opentype);
