@@ -1,30 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #include "../util.h"
 #include "linked-list.h"
 #include "fileio.h"
 
 struct userWrapper {
-  struct llNode* user_meta;
+  struct llNode* user_meta; // While llNode* from linked-list.h is for storing files, it works for other things too
   struct llNode* user_files;
 };
 
 struct allUserData {
   uint32_t count;
+  struct userWrapper** users; // Have to use pointer-to-pointers because it's an array!
 } users_meta;
 
 // Used to link users together
 struct llNode* users_meta_head = NULL;
 
-struct userWrapper* users[1];
+struct userWrapper* users;
 
 static uint64_t starter = 200560490131;
+static const uint8_t NAME_LEN = 21; // 20 digits for uint64_t + 1 for "\0"
 
 struct userWrapper* generate_user(char* name) {
   struct userWrapper* u = (struct userWrapper*)xmalloc(sizeof(struct userWrapper),
-													   "struct userWrapper* generate_user() @ fileio.c");
+													   "struct userWrapper* generate_user() @ file-access-daemon.c");
 
   append(users_meta_head, name, 0, 0);
   u->user_meta = prev_node(users_meta_head);
@@ -38,14 +41,15 @@ int initialize() {
   
   // We use an array of users because it doesn't change often
   // ...maybe make it a linked list?
-  users[0] = generate_user("root");
+  users_meta.users = (struct userWrapper**)xmalloc(sizeof(struct userWrapper**),
+												   "int initialize() @ file-access-daemon.c");
+  users_meta.users[0] = generate_user("root");
   users_meta.count = 1;
 
   return 0;
 }
 
-// TODO: generate a way to keep track of the user folder, hash the users name as a folder name?
-// Or just use a counter?
+// Very terrible 64-bit hash function
 uint64_t hash_char(char character, uint32_t i) {
   srand((character + i) * i);
   
@@ -64,5 +68,25 @@ char* get_user_folder_name(struct userWrapper* user) {
 	hash *= hash ^ hash_char(user->user_meta->fname[i], i);
   }
 
-  return hash;
+  char* strhash = (char*)xmalloc(sizeof(char) * NAME_LEN,
+								 "char* get_user_folder_name() @ file-access-daemon.c");
+  snprintf(strhash, (size_t)NAME_LEN, "%" PRIu64, hash);
+
+  return strhash;
+}
+
+int addUser(char* name) {
+  struct userWrapper* u = generate_user(name);
+
+  users_meta.count += 1;
+
+  struct userWrapper** new_array = realloc(users_meta.users, sizeof(struct userWrapper) * users_meta.count);
+  if (!new_array) {
+	hcf("Failed realloc to add new user!", "int addUser() @ file-access-daemon.c");
+  }
+
+  users_meta.users = new_array;
+  users_meta.users[users_meta.count - 1] = u;
+
+  return 0;
 }
