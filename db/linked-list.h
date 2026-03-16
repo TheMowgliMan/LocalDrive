@@ -12,6 +12,30 @@
 #define LL_WRONG_NODE 4
 
 struct llNode;
+struct llNode {
+    char fname[256];
+    uint64_t size; // in bytes
+    time_t timestamp;
+
+    uint8_t is_head;
+    uint32_t frevision;
+
+    // pointers for the next and last (historical) node in the linked list
+    struct llNode* next_node;
+    struct llNode* prev_node;
+
+    // pointers for the next and last node alphabetically
+    struct llNode* next_alpha;
+    struct llNode* prev_alpha;
+
+    // pointers for the next and last node by filesize
+    struct llNode* next_largest;
+    struct llNode* next_smallest;
+
+    // pointers for next and last node by creation time
+    struct llNode* next_oldest;
+    struct llNode* next_youngest;
+};
 
 struct llNode* get_n(struct llNode* ll, uint64_t item);
 
