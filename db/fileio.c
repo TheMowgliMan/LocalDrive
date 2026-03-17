@@ -188,3 +188,13 @@ int fileIOCtxFlush(struct fileIOCtx* ioctx) {
 
   return 0;
 }
+
+int fileIOCtxSelectFirst(struct fileIOCtx* ioctx) {
+  if (ioctx->fdata == NULL) {
+    ioctx->current_read = NULL;
+  } else {
+    ioctx->current_read = ioctx->fdata;
+  }
+
+  return 0;
+}
