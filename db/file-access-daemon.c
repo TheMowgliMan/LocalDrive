@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <string.h>
 
 #include "../util.h"
 #include "linked-list.h"
@@ -10,6 +13,8 @@
 struct userWrapper {
   struct llNode* user_meta; // While llNode* from linked-list.h is for storing files, it works for other things too
   struct llNode* user_files;
+
+  uint64_t password_hash;
 };
 
 struct allUserData {
@@ -36,19 +41,6 @@ struct userWrapper* generate_user(char* name) {
   return u;
 }
 
-int initialize() {
-  users_meta_head = new_ll();
-  
-  // We use an array of users because it doesn't change often
-  // ...maybe make it a linked list?
-  users_meta.users = (struct userWrapper**)xmalloc(sizeof(struct userWrapper**),
-												   "int initialize() @ file-access-daemon.c");
-  users_meta.users[0] = generate_user("root");
-  users_meta.count = 1;
-
-  return 0;
-}
-
 // Very terrible 64-bit hash function
 uint64_t hash_char(char character, uint32_t i) {
   srand((character + i) * i);
@@ -59,6 +51,30 @@ uint64_t hash_char(char character, uint32_t i) {
   uint64_t or = (c + i * 2967) << 5 | (c * rand()) << 3;
 
   return ((c * i) + (((c * i * 1111111111111111111) ^ not) & (and ^ or * 658493658747))) ^ (i * 4977177437865208637);
+}
+
+uint64_t hash_password(char* password) {
+  uint64_t hash = starter;
+
+  for (int i = 0; password[i]; i++) {
+	hash *= hash ^ hash_char(password[i], i);
+  }
+
+  return hash;
+}
+
+int initialize(char* root_password) {
+  users_meta_head = new_ll();
+  
+  // We use an array of users because it doesn't change often
+  // ...maybe make it a linked list?
+  users_meta.users = (struct userWrapper**)xmalloc(sizeof(struct userWrapper**),
+												   "int initialize() @ file-access-daemon.c");
+  users_meta.users[0] = generate_user("root");
+  users_meta.users[0]->password_hash = hash_password(root_password);
+  users_meta.count = 1;
+
+  return 0;
 }
 
 char* get_user_folder_name(struct userWrapper* user) {
@@ -87,6 +103,16 @@ int addUser(char* name) {
 
   users_meta.users = new_array;
   users_meta.users[users_meta.count - 1] = u;
+
+  errno = 0;
+  mkdir(get_user_folder_name(u), 0777);
+  if (errno != 0) {
+	if (errno = EEXIST) {
+	  ; // No news is good news
+	} else {
+	  hcf(strerror(errno), "int mkdir() @ int addUser() @ file-access-daemon.c");
+	}
+  }
 
   return 0;
 }
