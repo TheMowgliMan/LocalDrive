@@ -15,6 +15,7 @@ struct userWrapper {
   struct llNode* user_files;
 
   uint64_t password_hash;
+  uint64_t username_hash;
 };
 
 struct allUserData {
@@ -72,6 +73,7 @@ int initialize(char* root_password) {
 												   "int initialize() @ file-access-daemon.c");
   users_meta.users[0] = generate_user("root");
   users_meta.users[0]->password_hash = hash_password(root_password);
+  users_meta.users[0]->username_hash = 0x0000000000000000;
   users_meta.count = 1;
 
   return 0;
@@ -82,6 +84,10 @@ char* get_user_folder_name(struct userWrapper* user) {
 
   for(int i = 0; user->user_meta->fname[i]; i++) {
 	hash *= hash ^ hash_char(user->user_meta->fname[i], i);
+  }
+
+  if (strcmp(user->user_meta->fname, "root") == 0) {
+	hash = 0x0000000000000000;
   }
 
   char* strhash = (char*)xmalloc(sizeof(char) * NAME_LEN,
@@ -99,7 +105,10 @@ int addUser(const char* name) {
   struct userWrapper** new_array = realloc(users_meta.users, sizeof(struct userWrapper) * users_meta.count);
   if (!new_array) {
 	hcf("Failed realloc to add new user!", "int addUser() @ file-access-daemon.c");
-  }  
+  }
+
+  char* fldrn = get_user_folder_name(u);
+  u->username_hash = (uint64_t)strtoll(fldrn, NULL, 10);
 
   users_meta.users = new_array;
   users_meta.users[users_meta.count - 1] = u;
@@ -122,4 +131,8 @@ int userRegisterFile(struct userWrapper* user, const char* fname, uint64_t ts, u
   prev_node(user->user_files)->timestamp = (time_t)ts;
 
   return 0;
+}
+
+uint8_t userFileExists(struct userWrapper* user, const char* fname) {
+  ; //TODO: Add this
 }
