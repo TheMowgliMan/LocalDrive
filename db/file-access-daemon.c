@@ -30,7 +30,7 @@ struct userWrapper* users;
 static uint64_t starter = 200560490131;
 static const uint8_t NAME_LEN = 21; // 20 digits for uint64_t + 1 for "\0"
 
-struct userWrapper* generate_user(char* name) {
+struct userWrapper* generate_user(const char* name) {
   struct userWrapper* u = (struct userWrapper*)xmalloc(sizeof(struct userWrapper),
 													   "struct userWrapper* generate_user() @ file-access-daemon.c");
 
@@ -91,7 +91,7 @@ char* get_user_folder_name(struct userWrapper* user) {
   return strhash;
 }
 
-int addUser(char* name) {
+int addUser(const char* name) {
   struct userWrapper* u = generate_user(name);
 
   users_meta.count += 1;
@@ -99,7 +99,7 @@ int addUser(char* name) {
   struct userWrapper** new_array = realloc(users_meta.users, sizeof(struct userWrapper) * users_meta.count);
   if (!new_array) {
 	hcf("Failed realloc to add new user!", "int addUser() @ file-access-daemon.c");
-  }
+  }  
 
   users_meta.users = new_array;
   users_meta.users[users_meta.count - 1] = u;
@@ -113,6 +113,13 @@ int addUser(char* name) {
 	  hcf(strerror(errno), "int mkdir() @ int addUser() @ file-access-daemon.c");
 	}
   }
+
+  return 0;
+}
+
+int userRegisterFile(struct userWrapper* user, const char* fname, uint64_t ts, uint64_t fsize, uint32_t fr) {
+  append(user->user_files, fname, fsize, fr);
+  prev_node(user->user_files)->timestamp = (time_t)ts;
 
   return 0;
 }

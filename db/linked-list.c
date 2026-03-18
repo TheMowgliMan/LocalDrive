@@ -227,7 +227,7 @@ int relink_rf(struct llNode* ll, struct llNode* item) {
 
 /* Quickly bumps the timestamp and revision of the file node. */
 void bump_meta(struct llNode* llh, struct llNode* ll) {
-  ll->timestamp = time(NULL);
+  ll->timestamp = now();
   ll->frevision = ll->frevision + 1;
 
   relink_rf(llh, ll);
@@ -263,7 +263,7 @@ struct llNode* new_ll() {
   struct llNode* ll = (struct llNode*)xmalloc(sizeof(struct llNode), "struct llNode* new_ll() @ linked-list.c");
   
   ll->is_head = true;
-  ll->timestamp = time(NULL);
+  ll->timestamp = now();
   ll->frevision = 0;
   ll->size = 0;
 
@@ -294,7 +294,7 @@ int append(struct llNode* ll, const char* fn, uint64_t fsize, uint32_t revision)
   struct llNode* lla = (struct llNode*)xmalloc(sizeof(struct llNode), "int append() @ linked-list.c");
 
   lla->is_head = false;
-  lla->timestamp = time(NULL);
+  lla->timestamp = now();
   lla->frevision = revision;
   lla->size = fsize;
 

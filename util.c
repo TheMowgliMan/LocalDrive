@@ -2,6 +2,7 @@
 #include <syslog.h>
 #include <stdlib.h>
 #include "util.h"
+#include <time.h>
 
 char* red() {
   return "\u001b[31m";
@@ -9,6 +10,10 @@ char* red() {
 
 char* noc() {
   return "\u001b[0m";
+}
+
+time_t now() {
+  return time(NULL);
 }
 
 void hcf(char* msg, char* from) {
