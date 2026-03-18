@@ -286,7 +286,7 @@ struct llNode* new_ll() {
 }
 
 // appends an item to the ll (must be the head node!)
-int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision) {
+int append(struct llNode* ll, const char* fn, uint64_t fsize, uint32_t revision) {
   if (ll->is_head == false) {
 	fprintf(stderr, "%sError: must pass head node of linked list to append()!%s", red(), noc());
 	return LL_NOT_HEAD_NODE;
