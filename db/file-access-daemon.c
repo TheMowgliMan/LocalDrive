@@ -17,9 +17,11 @@
 #define LOGINSTATUS_DELAYED 3 // The login or logout attempt failed because the packet was old
 
 #define ACCEPTABLE_DELAY 6 // Seconds backwards the timestamp may be during login attempt
+#define SESSION_LENGTH 600 // Seconds after last activity to log the user out and invalidate the access key
 
 struct userLoginInfo { // Maximum danger
   time_t last_login_stamp;
+  uint64_t access_key;
   uint8_t is_logged_in;
   uint8_t status;
 };
@@ -47,12 +49,32 @@ struct userWrapper* users;
 static uint64_t starter = 200560490131;
 static const uint8_t NAME_LEN = 21; // 20 digits for uint64_t + 1 for "\0"
 
+
+uint64_t generate_access_key() {
+  #ifdef _POSIX_VERSION
+  FILE *r = fopen("/dev/urandom/");
+  if (!r) {
+	hcf("Cannot generate access keys, as opening '/dev/urandom/' failed!",
+		"uint64_t generate_access_key() @ file-access-daemon.c")
+  }
+
+  uint64_t rnum;
+  // TODO: GENERATE RANDOM NUMBERS BRUH
+  #else
+  hcf("Cannot generate access keys, as '/dev/urandom/' does not exist!",
+	  "uint64_t generate_access_key() @ file-access-daemon.c");
+  #endif
+
+  return 0;
+}
+
 struct userLoginInfo* generate_login() {
   struct userLoginInfo* l = (struct userLoginInfo*)xmalloc(sizeof(struct userLoginInfo),
 														   "struct userLoginInfo* generate_login() @ file-access-daemon.c");
 
   l->last_login_stamp = 0; // Hasn't logged in since last start
   l->is_logged_in = false;
+  l->access_key = 0;
 
   return l;
 }
