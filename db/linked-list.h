@@ -2,6 +2,7 @@
 #define LINKED_LIST_H_
 
 #include <stdint.h>
+#include <time.h>
 
 #define LL_FILENAME_TOO_LONG_ERROR 1
 #define LL_NOT_HEAD_NODE 2

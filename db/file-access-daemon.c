@@ -5,10 +5,15 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <time.h>
 
 #include "../util.h"
 #include "linked-list.h"
 #include "fileio.h"
+
+struct userLoginInfo { // Maximum danger
+  
+};
 
 struct userWrapper {
   struct llNode* user_meta; // While llNode* from linked-list.h is for storing files, it works for other things too
