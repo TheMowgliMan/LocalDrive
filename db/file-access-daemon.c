@@ -54,7 +54,7 @@ uint64_t hash_char(char character, uint32_t i) {
   return ((c * i) + (((c * i * 1111111111111111111) ^ not) & (and ^ or * 658493658747))) ^ (i * 4977177437865208637);
 }
 
-uint64_t hash_password(char* password) {
+uint64_t hash_as_number(char* password) {
   uint64_t hash = starter;
 
   for (int i = 0; password[i]; i++) {
@@ -72,7 +72,7 @@ int initialize(char* root_password) {
   users_meta.users = (struct userWrapper**)xmalloc(sizeof(struct userWrapper**),
 												   "int initialize() @ file-access-daemon.c");
   users_meta.users[0] = generate_user("root");
-  users_meta.users[0]->password_hash = hash_password(root_password);
+  users_meta.users[0]->password_hash = hash_as_number(root_password);
   users_meta.users[0]->username_hash = 0x0000000000000000;
   users_meta.count = 1;
 
@@ -134,5 +134,17 @@ int userRegisterFile(struct userWrapper* user, const char* fname, uint64_t ts, u
 }
 
 uint8_t userFileExists(struct userWrapper* user, const char* fname) {
-  ; //TODO: Add this
+  for (struct llNode* fsearch = user->user_files;
+	   !(fsearch->next_node->is_head);
+	   fsearch = fsearch->next_node) {
+	// We don't actually have to use the OS I/O systerms,
+	// Because we have this handy-dandy linked-list.
+	if (strcmp(fsearch->fname, fname) == 0) {
+	  return true;
+	}
+
+	// Just keeeeeep loopin'...
+  }
+
+  return 0;
 }
