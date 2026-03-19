@@ -57,7 +57,7 @@ int set_fname(struct llNode* llh, struct llNode* ll, char* fn);
 void set_size(struct llNode* llh, struct llNode* ll, uint64_t size);
 
 struct llNode* new_ll();
-int append(struct llNode* ll, char* fn, uint64_t fsize, uint32_t revision);
+int append(struct llNode* ll, const char* fn, uint64_t fsize, uint32_t revision);
 
 int del_p(struct llNode* ptr);
 int del(struct llNode* ll, uint64_t idx);
