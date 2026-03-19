@@ -11,8 +11,17 @@
 #include "linked-list.h"
 #include "fileio.h"
 
+#define LOGINSTATUS_OK 0 // Login or logout performed normally
+#define LOGINSTATUS_WRONG_PASSWORD 1 // The username-password hash did not match
+#define LOGINSTATUS_TIMEOUT 2 // The user was logged out because their session ran out
+#define LOGINSTATUS_DELAYED 3 // The login or logout attempt failed because the packet was old
+
+#define ACCEPTABLE_DELAY 6 // Seconds backwards the timestamp may be during login attempt
+
 struct userLoginInfo { // Maximum danger
-  
+  time_t last_login_stamp;
+  uint8_t is_logged_in;
+  uint8_t status;
 };
 
 struct userWrapper {
@@ -21,6 +30,8 @@ struct userWrapper {
 
   uint64_t password_hash;
   uint64_t username_hash;
+
+  struct userLoginInfo* login;
 };
 
 struct allUserData {
@@ -36,6 +47,16 @@ struct userWrapper* users;
 static uint64_t starter = 200560490131;
 static const uint8_t NAME_LEN = 21; // 20 digits for uint64_t + 1 for "\0"
 
+struct userLoginInfo* generate_login() {
+  struct userLoginInfo* l = (struct userLoginInfo*)xmalloc(sizeof(struct userLoginInfo),
+														   "struct userLoginInfo* generate_login() @ file-access-daemon.c");
+
+  l->last_login_stamp = 0; // Hasn't logged in since last start
+  l->is_logged_in = false;
+
+  return l;
+}
+
 struct userWrapper* generate_user(const char* name) {
   struct userWrapper* u = (struct userWrapper*)xmalloc(sizeof(struct userWrapper),
 													   "struct userWrapper* generate_user() @ file-access-daemon.c");
@@ -43,6 +64,8 @@ struct userWrapper* generate_user(const char* name) {
   append(users_meta_head, name, 0, 0);
   u->user_meta = prev_node(users_meta_head);
   u->user_files = new_ll();
+
+  u->login = generate_login();
 
   return u;
 }
@@ -59,7 +82,7 @@ uint64_t hash_char(char character, uint32_t i) {
   return ((c * i) + (((c * i * 1111111111111111111) ^ not) & (and ^ or * 658493658747))) ^ (i * 4977177437865208637);
 }
 
-uint64_t hash_as_number(char* password) {
+uint64_t hash_as_number(const char* password) {
   uint64_t hash = starter;
 
   for (int i = 0; password[i]; i++) {
@@ -102,7 +125,7 @@ char* get_user_folder_name(struct userWrapper* user) {
   return strhash;
 }
 
-int addUser(const char* name) {
+int addUser(const char* name, const char* pwrd) {
   struct userWrapper* u = generate_user(name);
 
   users_meta.count += 1;
@@ -113,13 +136,15 @@ int addUser(const char* name) {
   }
 
   char* fldrn = get_user_folder_name(u);
-  u->username_hash = (uint64_t)strtoll(fldrn, NULL, 10);
+  u->username_hash = hash_as_number(name);
+
+  u->password_hash = hash_as_number(pwrd);
 
   users_meta.users = new_array;
   users_meta.users[users_meta.count - 1] = u;
 
   errno = 0;
-  mkdir(get_user_folder_name(u), 0777);
+  mkdir(fldrn, 0777);
   if (errno != 0) {
 	if (errno = EEXIST) {
 	  ; // No news is good news
@@ -152,4 +177,8 @@ uint8_t userFileExists(struct userWrapper* user, const char* fname) {
   }
 
   return 0;
+}
+
+int login(struct userWrapper* user, uint64_t unph) { // "unph": username and password hash
+  
 }
