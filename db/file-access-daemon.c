@@ -52,14 +52,17 @@ static const uint8_t NAME_LEN = 21; // 20 digits for uint64_t + 1 for "\0"
 
 uint64_t generate_access_key() {
   #ifdef _POSIX_VERSION
-  FILE *r = fopen("/dev/urandom/");
+  FILE *r = fopen("/dev/urandom/", "r");
   if (!r) {
 	hcf("Cannot generate access keys, as opening '/dev/urandom/' failed!",
 		"uint64_t generate_access_key() @ file-access-daemon.c")
   }
 
   uint64_t rnum;
-  // TODO: GENERATE RANDOM NUMBERS BRUH
+  read(r, &rnum, sizeof(uint64_t));
+
+  return rnum;
+  
   #else
   hcf("Cannot generate access keys, as '/dev/urandom/' does not exist!",
 	  "uint64_t generate_access_key() @ file-access-daemon.c");
