@@ -14,7 +14,7 @@
 #define LOGINSTATUS_OK 0 // Login or logout performed normally
 #define LOGINSTATUS_WRONG_PASSWORD 1 // The username-password hash did not match
 #define LOGINSTATUS_TIMEOUT 2 // The user was logged out because their session ran out
-#define LOGINSTATUS_DELAYED 3 // The login or logout attempt failed because the packet was old
+#define LOGINSTATUS_LOGGED_OUT 3 // The login or logout attempt failed because the packet was old
 
 #define ACCEPTABLE_DELAY 6 // Seconds backwards the timestamp may be during login attempt
 #define SESSION_LENGTH 600 // Seconds after last activity to log the user out and invalidate the access key
@@ -192,7 +192,7 @@ uint8_t userFileExists(struct userWrapper* user, const char* fname) {
   for (struct llNode* fsearch = user->user_files;
 	   !(fsearch->next_node->is_head);
 	   fsearch = fsearch->next_node) {
-	// We don't actually have to use the OS I/O systerms,
+	// We don't actually have to use the OS I/O systems,
 	// Because we have this handy-dandy linked-list.
 	if (strcmp(fsearch->fname, fname) == 0) {
 	  return true;
@@ -204,7 +204,9 @@ uint8_t userFileExists(struct userWrapper* user, const char* fname) {
   return false;
 }
 
-int login(struct userWrapper* user, uint64_t unph) { // "unph": username and password hash
+int login(struct userWrapper* user, uint64_t unph) { // "unph": username and password hash, also XOR'ed with timestamp
+  uint8_t timeout = false;
+  
   if (user->login->is_logged_in && (now() - user->login->last_login_stamp) <= SESSION_LENGTH) {
 	user->login->last_login_stamp = now();
 
@@ -212,6 +214,41 @@ int login(struct userWrapper* user, uint64_t unph) { // "unph": username and pas
 
 	return LOGINSTATUS_OK;
   } else if (user->login->is_logged_in) { /* We know that the user's session timed out because of the above if conditional */
-	
+	timeout = true;
   }
+
+  for (int i = 0; i <= ACCEPTABLE_DELAY; i++) {
+	if ((user->username_hash ^ user->password_hash ^ (now() - i)) == unph) {
+	  user->login->is_logged_in = true;
+	  user->login->last_login_stamp = now();
+	  user->login->access_key = generate_access_key();
+
+	  return LOGINSTATUS_OK;
+	}
+  }
+
+  if (timeout) return LOGINSTATUS_TIMEOUT; else return LOGINSTATUS_WRONG_PASSWORD;
+}
+
+int check_login(struct userWrapper* user) {
+  if (user->login->is_logged_in) {
+	if ((now() - user->login->last_login_stamp) <= SESSION_LENGTH) {
+	  user->login->last_login_stamp = now();
+	  return LOGINSTATUS_OK;
+	} else {
+	  user->login->access_key = 0;
+	  return LOGINSTATUS_TIMEOUT;
+	}
+  }
+
+  return LOGINSTATUS_LOGGED_OUT;
+}
+
+uint64_t get_access_key(struct userWrapper* user) {
+  return user->login->access_key;
+}
+
+int check_access_key(struct userWrapper* user, uint64_t access_key) {
+  if (get_access_key(user) == access_key) return LOGINSTATUS_OK; else return LOGINSTATUS_WRONG_PASSWORD;
+  // be sure to run check_login() after this
 }
