@@ -201,9 +201,17 @@ uint8_t userFileExists(struct userWrapper* user, const char* fname) {
 	// Just keeeeeep loopin'...
   }
 
-  return 0;
+  return false;
 }
 
 int login(struct userWrapper* user, uint64_t unph) { // "unph": username and password hash
-  
+  if (user->login->is_logged_in && (now() - user->login->last_login_stamp) <= SESSION_LENGTH) {
+	user->login->last_login_stamp = now();
+
+	if (user->login->access_key == 0) user->login->access_key = generate_access_key();
+
+	return LOGINSTATUS_OK;
+  } else if (user->login->is_logged_in) { /* We know that the user's session timed out because of the above if conditional */
+	
+  }
 }
