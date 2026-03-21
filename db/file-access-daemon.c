@@ -100,6 +100,7 @@ struct userWrapper* generate_user(const char* name) {
   u->user_files = new_ll();
 
   u->login = generate_login();
+  u->open_files = NULL;
 
   return u;
 }
@@ -260,4 +261,22 @@ uint64_t get_access_key(struct userWrapper* user) {
 int check_access_key(struct userWrapper* user, uint64_t access_key) {
   if (get_access_key(user) == access_key) return LOGINSTATUS_OK; else return LOGINSTATUS_WRONG_PASSWORD;
   // be sure to run check_login() after this
+}
+
+struct fileIOCtx* open_file_context(struct userWrapper* user, char* fname) {
+  struct fileIOCtx* ioctx = fileIOCtxInit(fname);
+
+  if (user->open_files == NULL) {
+	
+  } else {
+	struct userFileIOCtxSll* editing = user->open_files;
+	while (editing != NULL) {
+	  editing = editing->next;
+	}
+  }
+
+  editing = (struct userFileIOCtxSll*)xmalloc(sizeof(struct userFileIOCtxSll),
+														 "struct fileIOCtx* open_file_context() @ file-access-daemon.c");
+  user->open_files->ioctx = ioctx;
+  user->open_files->next = NULL;
 }
