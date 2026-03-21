@@ -26,6 +26,11 @@ struct userLoginInfo { // Maximum danger
   uint8_t status;
 };
 
+struct userFileIOCtxSll {
+  struct fileIOCtx* ioctx;
+  struct userFileIOCtxSll* next;
+};
+
 struct userWrapper {
   struct llNode* user_meta; // While llNode* from linked-list.h is for storing files, it works for other things too
   struct llNode* user_files;
@@ -34,6 +39,8 @@ struct userWrapper {
   uint64_t username_hash;
 
   struct userLoginInfo* login;
+
+  struct userFileIOCtxSll* open_files;
 };
 
 struct allUserData {
@@ -41,10 +48,12 @@ struct allUserData {
   struct userWrapper** users; // Have to use pointer-to-pointers because it's an array!
 } users_meta;
 
+
 // Used to link users together
 struct llNode* users_meta_head = NULL;
 
 struct userWrapper* users;
+
 
 static uint64_t starter = 200560490131;
 static const uint8_t NAME_LEN = 21; // 20 digits for uint64_t + 1 for "\0"
