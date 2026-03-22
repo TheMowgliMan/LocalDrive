@@ -11,12 +11,16 @@
 #include "linked-list.h"
 #include "fileio.h"
 
+#define FILESTATUS_OPENERR -1 // There was an error opening the file.
+#define FILESTATUS_DONE 0 // Successfully read/wrote the file.
+// Can be shared with LOGINSTATUS_OK because the read/write functions never return it.
+
 #define LOGINSTATUS_OK 0 // Login or logout performed normally
 #define LOGINSTATUS_WRONG_PASSWORD 1 // The username-password hash did not match
 #define LOGINSTATUS_TIMEOUT 2 // The user was logged out because their session ran out
 #define LOGINSTATUS_LOGGED_OUT 3 // The login or logout attempt failed because there is no login
 
-#define ACCEPTABLE_DELAY 6 // Seconds backwards the timestamp may be during login attempt
+#define ACCEPTABLE_DELAY 14 // Seconds backwards the timestamp may be during login attempt
 #define SESSION_LENGTH 600 // Seconds after last activity to log the user out and invalidate the access key
 
 struct userLoginInfo { // Maximum danger
@@ -214,10 +218,11 @@ uint8_t userFileExists(struct userWrapper* user, const char* fname) {
   return false;
 }
 
-int login(struct userWrapper* user, uint64_t unph) { // "unph": username and password hash, also XOR'ed with timestamp
+int login(struct userWrapper* user, uint64_t unph, uint8_t is_safe) {
+  // "unph": username and password hash, also XOR'ed with timestamp
   uint8_t timeout = false;
   
-  if (user->login->is_logged_in && (now() - user->login->last_login_stamp) <= SESSION_LENGTH) {
+  if (user->login->is_logged_in && is_safe && (now() - user->login->last_login_stamp) <= SESSION_LENGTH) {
 	user->login->last_login_stamp = now();
 
 	if (user->login->access_key == 0) user->login->access_key = generate_access_key();
@@ -293,22 +298,35 @@ struct fileIOCtx* open_file_context(struct userWrapper* user, char* fname) {
 }
 
 int openUserFile(struct userWrapper* user, char* fname, uint64_t access_key, uint64_t unph) {
-  if (access_key && unph == false) {
-	return LOGINSTATUS_LOGGED_OUT;
-  }
+  if (access_key == false && unph == false) return LOGINSTATUS_LOGGED_OUT;
 
+  uint8_t proceed = false;
+  
   if (access_key != 0) {
 	int is_valid = check_access_key(user, access_key);
-	if (is_valid != LOGINSTATUS_OK && unph == 0) {
-	  return is_valid;
-	} else {
-	  if (is_valid != LOGINSTATUS_OK) {
-		is_valid = login(user, unph);
-
-		if (is_valid != LOGINSTATUS_OK) {
-		  return is_valid;
-		}
+	
+	if (is_valid != LOGINSTATUS_OK) {
+	  if (unph == 0) {
+		return is_valid;
+	  } else {
+		// Since we already checked the access key at this point and it failed, the login is unsafe and a timeout is
+		// dangerous.
+		is_valid = login(user, unph, false);
 	  }
 	}
+
+	if (is_valid != LOGINSTATUS_OK) return is_valid;
+
+	if (check_login(user) == LOGINSTATUS_OK) proceed = true; else return LOGINSTATUS_LOGGED_OUT;
   }
+
+  if (unph != 0) {
+	int is_valid = login(user, unph, false);
+
+	if (is_valid != LOGINSTATUS_OK) return is_valid;
+
+	if (check_login(user) == LOGINSTATUS_OK) proceed = true; else return LOGINSTATUS_LOGGED_OUT;
+  }
+
+  if (!proceed) return LOGINSTATUS_LOGGED_OUT;
 }
