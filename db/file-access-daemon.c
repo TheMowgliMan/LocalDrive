@@ -11,6 +11,8 @@
 #include "linked-list.h"
 #include "fileio.h"
 
+#define FILESTATUS_NOTFOUND -3 // The file does not exist.
+#define FILESTATUS_READERR -2 // There was an error reading the file.
 #define FILESTATUS_OPENERR -1 // There was an error opening the file.
 #define FILESTATUS_DONE 0 // Successfully read/wrote the file.
 // Can be shared with LOGINSTATUS_OK because the read/write functions never return it.
@@ -329,4 +331,11 @@ int openUserFile(struct userWrapper* user, char* fname, uint64_t access_key, uin
   }
 
   if (!proceed) return LOGINSTATUS_LOGGED_OUT;
+
+  if (!userFileExists(user, fname)) return FILESTATUS_NOTFOUND;
+
+  // Now we check for an existing file descriptor
+  if (user->open_files != NULL) {
+	;
+  }
 }
