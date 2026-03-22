@@ -14,7 +14,7 @@
 #define LOGINSTATUS_OK 0 // Login or logout performed normally
 #define LOGINSTATUS_WRONG_PASSWORD 1 // The username-password hash did not match
 #define LOGINSTATUS_TIMEOUT 2 // The user was logged out because their session ran out
-#define LOGINSTATUS_LOGGED_OUT 3 // The login or logout attempt failed because the packet was old
+#define LOGINSTATUS_LOGGED_OUT 3 // The login or logout attempt failed because there is no login
 
 #define ACCEPTABLE_DELAY 6 // Seconds backwards the timestamp may be during login attempt
 #define SESSION_LENGTH 600 // Seconds after last activity to log the user out and invalidate the access key
@@ -292,4 +292,23 @@ struct fileIOCtx* open_file_context(struct userWrapper* user, char* fname) {
   return ioctx;
 }
 
-int openUserFile(struct userWrapper* user, char* fname, uint64_t access_key, uint64_t unph);
+int openUserFile(struct userWrapper* user, char* fname, uint64_t access_key, uint64_t unph) {
+  if (access_key && unph == false) {
+	return LOGINSTATUS_LOGGED_OUT;
+  }
+
+  if (access_key != 0) {
+	int is_valid = check_access_key(user, access_key);
+	if (is_valid != LOGINSTATUS_OK && unph == 0) {
+	  return is_valid;
+	} else {
+	  if (is_valid != LOGINSTATUS_OK) {
+		is_valid = login(user, unph);
+
+		if (is_valid != LOGINSTATUS_OK) {
+		  return is_valid;
+		}
+	  }
+	}
+  }
+}
