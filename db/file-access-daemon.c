@@ -259,6 +259,10 @@ uint64_t get_access_key(struct userWrapper* user) {
 }
 
 int check_access_key(struct userWrapper* user, uint64_t access_key) {
+  if ((now() - user->login->last_login_stamp) > SESSION_LENGTH) {
+	user->login->access_key = 0;
+	return LOGINSTATUS_TIMEOUT;
+  }
   if (get_access_key(user) == access_key) return LOGINSTATUS_OK; else return LOGINSTATUS_WRONG_PASSWORD;
   // be sure to run check_login() after this
 }
@@ -266,17 +270,26 @@ int check_access_key(struct userWrapper* user, uint64_t access_key) {
 struct fileIOCtx* open_file_context(struct userWrapper* user, char* fname) {
   struct fileIOCtx* ioctx = fileIOCtxInit(fname);
 
-  if (user->open_files == NULL) {
-	
-  } else {
-	struct userFileIOCtxSll* editing = user->open_files;
-	while (editing != NULL) {
-	  editing = editing->next;
-	}
-  }
+  struct userFileIOCtxSll* f =
+	(struct userFileIOCtxSll*)xmalloc(sizeof(struct userFileIOCtxSll),
+									  "struct fileIOCtx* open_file_context() @ file-access-daemon.c");
 
-  editing = (struct userFileIOCtxSll*)xmalloc(sizeof(struct userFileIOCtxSll),
-														 "struct fileIOCtx* open_file_context() @ file-access-daemon.c");
-  user->open_files->ioctx = ioctx;
-  user->open_files->next = NULL;
+  f->ioctx = ioctx;
+  f->next = NULL;
+  
+  if (user->open_files == NULL) {
+	user->open_files = f;
+  } else {
+	struct userFileIOCtxSll* cur = user->open_files;
+	
+	while (cur != NULL) {
+	  cur = cur->next;
+	}
+
+	cur = f;
+  }
+  
+  return ioctx;
 }
+
+int openUserFile(struct userWrapper* user, char* fname, uint64_t access_key, uint64_t unph);
