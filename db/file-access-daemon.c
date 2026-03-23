@@ -11,6 +11,7 @@
 #include "linked-list.h"
 #include "fileio.h"
 
+#define FILESTATUS_FNAMETOOBIG -4 // The filepath is too long.
 #define FILESTATUS_NOTFOUND -3 // The file does not exist.
 #define FILESTATUS_READERR -2 // There was an error reading the file.
 #define FILESTATUS_OPENERR -1 // There was an error opening the file.
@@ -63,6 +64,7 @@ struct userWrapper* users;
 
 static uint64_t starter = 200560490131;
 static const uint8_t NAME_LEN = 21; // 20 digits for uint64_t + 1 for "\0"
+static const uint16_t FULL_PATH_BUFFER_SIZE = 256 + NAME_LEN;
 
 
 uint64_t generate_access_key() {
@@ -355,5 +357,22 @@ int openUserFile(struct userWrapper* user, char* fname, uint64_t access_key, uin
 	xmalloc(sizeof(struct userFileIOCtxSll), "struct userFileIOCtxSll* openUserFile() @ file-access-daemon.c");
 
   sllctx->next = NULL;
-  sllctx->ioctx = fileIOCtxInit(fname);
+
+  char fpath[FULL_PATH_BUFFER_SIZE];
+  int written = snprintf(fpath, (size_t)FULL_PATH_BUFFER_SIZE, "%s/%s", get_user_folder_name(user), fname);
+  if (written >= FULL_PATH_BUFFER_SIZE) {
+	return FILESTATUS_FNAMETOOBIG;
+  }
+  sllctx->ioctx = fileIOCtxInit(fpath);
+
+  if (user->open_files == NULL) {
+	user->open_files = sllctx;
+	return FILESTATUS_DONE;
+  }
+
+  struct userFileIOCtxSll* cur = NULL;
+  for (cur = user->open_files; cur->next; cur = cur->next) {;}
+  cur->next = sllctx;
+
+  return FILESTATUS_DONE;
 }
