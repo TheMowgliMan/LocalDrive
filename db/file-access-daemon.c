@@ -32,6 +32,9 @@
 #define ACCEPTABLE_DELAY 14 // Seconds backwards the timestamp may be during login attempt
 #define SESSION_LENGTH 600 // Seconds after last activity to log the user out and invalidate the access key
 
+// The size of allocations to be done for a file read
+const uint32_t ALLOC_SIZE = 0x1 << 20; // 1 MiB 
+
 struct userLoginInfo { // Maximum danger
   time_t last_login_stamp;
   uint64_t access_key;
@@ -58,6 +61,7 @@ struct userWrapper {
 
 struct allUserData {
   uint32_t count;
+  struct fileIOCtx* master_tmp;
   struct userWrapper** users; // Have to use pointer-to-pointers because it's an array!
 } users_meta;
 
@@ -185,6 +189,8 @@ int initialize(char* root_password) {
   users_meta.users[0]->password_hash = hash_as_number(root_password);
   users_meta.users[0]->username_hash = 0x0000000000000000;
   users_meta.count = 1;
+
+  users_meta.master_tmp = fileIOCtxInit("tmpf.tmp");
 
   return 0;
 }
@@ -416,4 +422,13 @@ int openUserFile(struct userWrapper* user, char* fname, uint64_t access_key, uin
   // We don't have to explicitly open the ioctx because the file handler does that automatically for us
 
   return FILESTATUS_DONE;
+}
+
+uint8_t userReadFile(struct userWrapper* user, char* fname, uint64_t access_key, uint64_t unph) {
+  int status = openUserFile(user, fname, access_key, unph);
+  int status_type = get_status_type(status);
+
+  if (status_type != UNIVERSALSTATUS_OK) return status;
+
+  // TODO: FINISH!!
 }

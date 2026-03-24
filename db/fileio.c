@@ -89,6 +89,7 @@ int fileIOCtxOpen(struct fileIOCtx *ctx, const char *opentype) {
   }
 
   ctx->fhandler = f;
+
   return 0;
 }
 
@@ -201,7 +202,13 @@ int fileIOCtxSelectFirst(struct fileIOCtx* ioctx) {
   return 0;
 }
 
-int fileIOCtxLock(struct fileIOCtx* ioctx) {
+void fileIOCtxLock(struct fileIOCtx* ioctx) {
   flockfile(ioctx->fhandler);
-  return 0;
+  while (ioctx->locked == true) {;}
+  ioctx->locked = true;
+}
+
+void fileIOCtxUnlock(struct fileIOCtx* ioctx) {
+  funlockfile(ioctx->fhandler);
+  ioctx->locked = false;
 }
