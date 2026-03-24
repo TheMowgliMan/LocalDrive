@@ -11,6 +11,12 @@
 #include "linked-list.h"
 #include "fileio.h"
 
+#define ERRTYPE_FILESTATUS -1000000
+#define ERRTYPE_LOGINSTATUS -1000001
+#define ERRTYPE_INVALIDSTATUS 223223 // The given status doesn't exist
+
+#define UNIVERSALSTATUS_OK 0 // Equivalent to all other kinds of "OK" statuses
+
 #define FILESTATUS_FNAMETOOBIG -4 // The filepath is too long.
 #define FILESTATUS_NOTFOUND -3 // The file does not exist.
 #define FILESTATUS_READERR -2 // There was an error reading the file.
@@ -66,6 +72,39 @@ static uint64_t starter = 200560490131;
 static const uint8_t NAME_LEN = 21; // 20 digits for uint64_t + 1 for "\0"
 static const uint16_t FULL_PATH_BUFFER_SIZE = 256 + NAME_LEN;
 
+
+int get_status_type(int stat) {
+  switch (stat) {
+  case UNIVERSALSTATUS_OK:
+	return UNIVERSALSTATUS_OK;
+	break;
+  case LOGINSTATUS_WRONG_PASSWORD:
+	return ERRTYPE_LOGINSTATUS;
+	break;
+  case LOGINSTATUS_TIMEOUT:
+	return ERRTYPE_LOGINSTATUS;
+	break;
+  case LOGINSTATUS_LOGGED_OUT:
+	return ERRTYPE_LOGINSTATUS;
+	break;
+  case FILESTATUS_OPENERR:
+	return ERRTYPE_FILESTATUS;
+	break;
+  case FILESTATUS_READERR:
+	return ERRTYPE_FILESTATUS;
+	break;
+  case FILESTATUS_NOTFOUND:
+	return ERRTYPE_FILESTATUS;
+	break;
+  case FILESTATUS_FNAMETOOBIG:
+	return ERRTYPE_FILESTATUS;
+	break;
+  default:
+	return ERRTYPE_INVALIDSTATUS;
+  }
+
+  return ERRTYPE_INVALIDSTATUS;
+}
 
 uint64_t generate_access_key() {
   #ifdef _POSIX_VERSION
@@ -373,6 +412,8 @@ int openUserFile(struct userWrapper* user, char* fname, uint64_t access_key, uin
   struct userFileIOCtxSll* cur = NULL;
   for (cur = user->open_files; cur->next; cur = cur->next) {;}
   cur->next = sllctx;
+
+  // We don't have to explicitly open the ioctx because the file handler does that automatically for us
 
   return FILESTATUS_DONE;
 }
