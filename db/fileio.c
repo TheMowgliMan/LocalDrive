@@ -21,6 +21,7 @@ struct fileIOCtx {
   struct sllNode *current_read;
 
   uint16_t attempts;
+  uint8_t locked;
 };
 
 FILE* try_open(struct fileIOCtx* ioctx, const char *opentype) {
@@ -74,6 +75,7 @@ struct fileIOCtx* fileIOCtxInit(char* name) {
   ctx->fdata = NULL;
   ctx->attempts = 0;
   ctx->current_read = NULL;
+  ctx->locked = false;
 
   return ctx;
 }
@@ -196,5 +198,10 @@ int fileIOCtxSelectFirst(struct fileIOCtx* ioctx) {
     ioctx->current_read = ioctx->fdata;
   }
 
+  return 0;
+}
+
+int fileIOCtxLock(struct fileIOCtx* ioctx) {
+  flockfile(ioctx->fhandler);
   return 0;
 }
